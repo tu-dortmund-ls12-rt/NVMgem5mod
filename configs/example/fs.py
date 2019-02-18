@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2013, 2016, 2019 ARM Limited
+# Copyright (c) 2010-2013, 2016 ARM Limited
 # All rights reserved.
 #
 # The license below extends only to copyright in the software and shall
@@ -95,6 +95,7 @@ def build_test_system(np):
                                  options.num_cpus, bm[0], options.dtb_filename,
                                  bare_metal=options.bare_metal,
                                  cmdline=cmdline,
+                                 ignore_dtb=options.generate_dtb,
                                  external_memory=
                                    options.external_memory_system,
                                  ruby=options.ruby,
@@ -189,7 +190,7 @@ def build_test_system(np):
 
         # Sanity check
         if options.simpoint_profile:
-            if not CpuConfig.is_noncaching_cpu(TestCPUClass):
+            if not CpuConfig.is_atomic_cpu(TestCPUClass):
                 fatal("SimPoint generation should be done with atomic cpu")
             if np > 1:
                 fatal("SimPoint generation not supported with more than one CPUs")
@@ -240,7 +241,8 @@ def build_drive_system(np):
                                        cmdline=cmdline)
     elif buildEnv['TARGET_ISA'] == 'arm':
         drive_sys = makeArmSystem(drive_mem_mode, options.machine_type, np,
-                                  bm[1], options.dtb_filename, cmdline=cmdline)
+                                  bm[1], options.dtb_filename, cmdline=cmdline,
+                                  ignore_dtb=options.generate_dtb)
 
     # Create a top-level voltage domain
     drive_sys.voltage_domain = VoltageDomain(voltage = options.sys_voltage)
@@ -259,6 +261,7 @@ def build_drive_system(np):
 
     drive_sys.cpu = DriveCPUClass(clk_domain=drive_sys.cpu_clk_domain,
                                   cpu_id=0)
+
     drive_sys.cpu.createThreads()
     drive_sys.cpu.createInterruptController()
     drive_sys.cpu.connectAllPorts(drive_sys.membus)
@@ -352,18 +355,49 @@ if options.timesync:
 if options.frame_capture:
     VncServer.frame_capture = True
 
-if buildEnv['TARGET_ISA'] == "arm" and not options.bare_metal \
-        and not options.dtb_filename:
+if buildEnv['TARGET_ISA'] == "arm" and options.generate_dtb:
+    # Sanity checks
+    if options.dtb_filename:
+        fatal("--generate-dtb and --dtb-filename cannot be specified at the"\
+             "same time.")
+
     if options.machine_type not in ["VExpress_GEM5", "VExpress_GEM5_V1"]:
         warn("Can only correctly generate a dtb for VExpress_GEM5_V1 " \
              "platforms, unless custom hardware models have been equipped "\
              "with generation functionality.")
 
     # Generate a Device Tree
+    def create_dtb_for_system(system, filename):
+        state = FdtState(addr_cells=2, size_cells=2, cpu_cells=1)
+        rootNode = system.generateDeviceTree(state)
+
+        fdt = Fdt()
+        fdt.add_rootnode(rootNode)
+        dtb_filename = os.path.join(m5.options.outdir, filename)
+        return fdt.writeDtbFile(dtb_filename)
+
     for sysname in ('system', 'testsys', 'drivesys'):
         if hasattr(root, sysname):
             sys = getattr(root, sysname)
-            sys.generateDtb(m5.options.outdir, '%s.dtb' % sysname)
+            sys.dtb_filename = create_dtb_for_system(sys, '%s.dtb' % sysname)
+            
+from m5.objects import ArmSemihosting
+test_sys.semihosting = ArmSemihosting()
+test_sys.highest_el_is_64 = True
+test_sys.auto_reset_addr = True
+
+for cpu in test_sys.cpu:
+    for isa in cpu.isa:
+        isa.pmu=ArmPMU()
+        isa.pmu.interrupt=ArmSPI()
+        isa.pmu.interrupt.num=15
+        isa.pmu.addArchEvents(
+        cpu=cpu, dtb=cpu.dtb, itb=cpu.itb,
+        icache=getattr(cpu, "il1_cache", None),
+        dcache=getattr(cpu, "dl1_cache", None),
+        l2cache=getattr(cpu, "l2_cache", None)
+        )
+
 
 Simulation.setWorkCountOptions(test_sys, options)
 Simulation.run(options, root, test_sys, FutureClass)
