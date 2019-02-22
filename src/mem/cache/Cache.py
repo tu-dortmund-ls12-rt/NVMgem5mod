@@ -42,11 +42,10 @@
 from m5.params import *
 from m5.proxy import *
 from m5.SimObject import SimObject
-
-from m5.objects.MemObject import MemObject
-from m5.objects.Prefetcher import BasePrefetcher
-from m5.objects.ReplacementPolicies import *
-from m5.objects.Tags import *
+from MemObject import MemObject
+from Prefetcher import BasePrefetcher
+from ReplacementPolicies import *
+from Tags import *
 
 
 # Enum for cache clusivity, currently mostly inclusive or mostly

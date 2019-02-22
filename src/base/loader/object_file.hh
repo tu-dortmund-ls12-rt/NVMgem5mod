@@ -57,8 +57,7 @@ class ObjectFile
         Arm,
         Thumb,
         Power,
-        Riscv64,
-        Riscv32
+        Riscv
     };
 
     enum OpSys {

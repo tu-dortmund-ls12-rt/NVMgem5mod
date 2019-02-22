@@ -148,7 +148,7 @@ def parse_options():
     options_file = config.get('options.py')
     if options_file:
         scope = { 'options' : options }
-        exec(compile(open(options_file).read(), options_file, 'exec'), scope)
+        execfile(options_file, scope)
 
     arguments = options.parse_args()
     return options,arguments
@@ -191,15 +191,6 @@ def interact(scope):
         # isn't available.
         code.InteractiveConsole(scope).interact(banner)
 
-
-def _check_tracing():
-    import defines
-
-    if defines.TRACING_ON:
-        return
-
-    fatal("Tracing is not enabled.  Compile with TRACING_ON")
-
 def main(*args):
     import m5
 
@@ -218,9 +209,15 @@ def main(*args):
     elif len(args) == 2:
         options, arguments = args
     else:
-        raise TypeError("main() takes 0 or 2 arguments (%d given)" % len(args))
+        raise TypeError, "main() takes 0 or 2 arguments (%d given)" % len(args)
 
     m5.options = options
+
+    def check_tracing():
+        if defines.TRACING_ON:
+            return
+
+        fatal("Tracing is not enabled.  Compile with TRACING_ON")
 
     # Set the main event queue for the main thread.
     event.mainq = event.getEventQueue(0)
@@ -282,7 +279,7 @@ def main(*args):
 
     if options.debug_help:
         done = True
-        _check_tracing()
+        check_tracing()
         debug.help()
 
     if options.list_sim_objects:
@@ -369,7 +366,7 @@ def main(*args):
         debug.schedBreak(int(when))
 
     if options.debug_flags:
-        _check_tracing()
+        check_tracing()
 
         on_flags = []
         off_flags = []
@@ -389,28 +386,28 @@ def main(*args):
                 debug.flags[flag].enable()
 
     if options.debug_start:
-        _check_tracing()
+        check_tracing()
         e = event.create(trace.enable, event.Event.Debug_Enable_Pri)
         event.mainq.schedule(e, options.debug_start)
     else:
         trace.enable()
 
     if options.debug_end:
-        _check_tracing()
+        check_tracing()
         e = event.create(trace.disable, event.Event.Debug_Enable_Pri)
         event.mainq.schedule(e, options.debug_end)
 
     trace.output(options.debug_file)
 
     for ignore in options.debug_ignore:
-        _check_tracing()
+        check_tracing()
         trace.ignore(ignore)
 
     sys.argv = arguments
     sys.path = [ os.path.dirname(sys.argv[0]) ] + sys.path
 
     filename = sys.argv[0]
-    filedata = open(filename, 'r').read()
+    filedata = file(filename, 'r').read()
     filecode = compile(filedata, filename, 'exec')
     scope = { '__file__' : filename,
               '__name__' : '__m5_main__' }
@@ -435,7 +432,7 @@ def main(*args):
                 t = t.tb_next
                 pdb.interaction(t.tb_frame,t)
     else:
-        exec(filecode, scope)
+        exec filecode in scope
 
     # once the script is done
     if options.interactive:

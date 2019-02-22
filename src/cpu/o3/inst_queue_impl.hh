@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014, 2017-2018 ARM Limited
+ * Copyright (c) 2011-2014 ARM Limited
  * Copyright (c) 2013 Advanced Micro Devices, Inc.
  * All rights reserved.
  *
@@ -104,7 +104,6 @@ InstructionQueue<Impl>::InstructionQueue(O3CPU *cpu_ptr, IEW *iew_ptr,
     numPhysRegs = params->numPhysIntRegs + params->numPhysFloatRegs +
                     params->numPhysVecRegs +
                     params->numPhysVecRegs * TheISA::NumVecElemPerVecReg +
-                    params->numPhysVecPredRegs +
                     params->numPhysCCRegs;
 
     //Create an entry for each physical register within the
@@ -1141,6 +1140,9 @@ template <class Impl>
 void
 InstructionQueue<Impl>::blockMemInst(const DynInstPtr &blocked_inst)
 {
+    blocked_inst->translationStarted(false);
+    blocked_inst->translationCompleted(false);
+
     blocked_inst->clearIssued();
     blocked_inst->clearCanIssue();
     blockedMemInsts.push_back(blocked_inst);
@@ -1251,15 +1253,13 @@ InstructionQueue<Impl>::doSquash(ThreadID tid)
 
             bool is_acq_rel = squashed_inst->isMemBarrier() &&
                          (squashed_inst->isLoad() ||
-                          squashed_inst->isAtomic() ||
-                          (squashed_inst->isStore() &&
+                           (squashed_inst->isStore() &&
                              !squashed_inst->isStoreConditional()));
 
             // Remove the instruction from the dependency list.
             if (is_acq_rel ||
                 (!squashed_inst->isNonSpeculative() &&
                  !squashed_inst->isStoreConditional() &&
-                 !squashed_inst->isAtomic() &&
                  !squashed_inst->isMemBarrier() &&
                  !squashed_inst->isWriteBarrier())) {
 
@@ -1285,9 +1285,9 @@ InstructionQueue<Impl>::doSquash(ThreadID tid)
                                            squashed_inst);
                     }
 
+
                     ++iqSquashedOperandsExamined;
                 }
-
             } else if (!squashed_inst->isStoreConditional() ||
                        !squashed_inst->isCompleted()) {
                 NonSpecMapIt ns_inst_it =

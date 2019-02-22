@@ -169,7 +169,12 @@ def enable():
         if not (stat.flags & flags.display):
             stat.name = "__Stat%06d" % stat.id
 
-    stats_list.sort(key=lambda s: s.name.split('.'))
+    def less(stat1, stat2):
+        v1 = stat1.name.split('.')
+        v2 = stat2.name.split('.')
+        return v1 < v2
+
+    stats_list.sort(less)
     for stat in stats_list:
         stats_dict[stat.name] = stat
         stat.enable()

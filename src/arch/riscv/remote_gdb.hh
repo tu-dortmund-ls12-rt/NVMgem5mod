@@ -59,15 +59,15 @@ class RemoteGDB : public BaseRemoteGDB
       using BaseGdbRegCache::BaseGdbRegCache;
       private:
         struct {
-            uint64_t gpr[NumIntArchRegs];
-            uint64_t pc;
-            uint64_t fpr[NumFloatRegs];
+            IntReg gpr[NumIntArchRegs];
+            IntReg pc;
+            FloatRegBits fpr[NumFloatRegs];
 
-            uint64_t csr_base;
+            MiscReg csr_base;
             uint32_t fflags;
             uint32_t frm;
             uint32_t fcsr;
-            uint64_t csr[NumMiscRegs - ExplicitCSRs];
+            MiscReg csr[NumMiscRegs - ExplicitCSRs];
         } __attribute__((__packed__)) r;
       public:
         char *data() const { return (char *)&r; }

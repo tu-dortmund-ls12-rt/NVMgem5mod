@@ -201,7 +201,7 @@ MipsProcess::argsInit(int pageSize)
 }
 
 
-RegVal
+MipsISA::IntReg
 MipsProcess::getSyscallArg(ThreadContext *tc, int &i)
 {
     assert(i < 6);
@@ -209,7 +209,7 @@ MipsProcess::getSyscallArg(ThreadContext *tc, int &i)
 }
 
 void
-MipsProcess::setSyscallArg(ThreadContext *tc, int i, RegVal val)
+MipsProcess::setSyscallArg(ThreadContext *tc, int i, MipsISA::IntReg val)
 {
     assert(i < 6);
     tc->setIntReg(FirstArgumentReg + i, val);

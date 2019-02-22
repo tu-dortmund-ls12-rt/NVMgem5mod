@@ -252,8 +252,8 @@ class Gicv3CPUInterface : public ArmISA::BaseISADevice, public Serializable
     void init();
     void initState();
 
-    RegVal readMiscReg(int misc_reg) override;
-    void setMiscReg(int misc_reg, RegVal val) override;
+    ArmISA::MiscReg readMiscReg(int misc_reg) override;
+    void setMiscReg(int misc_reg, ArmISA::MiscReg val) override;
     void update();
     void virtualUpdate();
 

@@ -76,8 +76,7 @@ class BasePrefetcher : public ClockedObject
     };
 
     std::vector<PrefetchListener *> listeners;
-
-  public:
+  protected:
 
     /**
      * Class containing the information needed by the prefetch to train and
@@ -169,8 +168,6 @@ class BasePrefetcher : public ClockedObject
         PrefetchInfo(PrefetchInfo const &pfi, Addr addr);
     };
 
-  protected:
-
     // PARAMETERS
 
     /** Pointr to the parent cache. */
@@ -217,8 +214,6 @@ class BasePrefetcher : public ClockedObject
     /** Determine if address is in cache miss queue */
     bool inMissQueue(Addr addr, bool is_secure) const;
 
-    bool hasBeenPrefetched(Addr addr, bool is_secure) const;
-
     /** Determine if addresses are on the same page */
     bool samePage(Addr a, Addr b) const;
     /** Determine the address of the block in which a lays */
@@ -233,11 +228,6 @@ class BasePrefetcher : public ClockedObject
     Addr pageIthBlockAddress(Addr page, uint32_t i) const;
 
     Stats::Scalar pfIssued;
-
-    /** Total prefetches issued */
-    uint64_t issuedPrefetches;
-    /** Total prefetches that has been useful */
-    uint64_t usefulPrefetches;
 
   public:
 

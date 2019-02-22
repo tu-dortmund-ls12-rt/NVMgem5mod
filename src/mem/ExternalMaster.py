@@ -39,7 +39,7 @@
 
 from m5.params import *
 from m5.proxy import *
-from m5.objects.MemObject import MemObject
+from MemObject import MemObject
 
 class ExternalMaster(MemObject):
     type = 'ExternalMaster'

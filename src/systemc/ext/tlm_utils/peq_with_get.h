@@ -25,11 +25,7 @@
 #define __SYSTEMC_EXT_TLM_UTILS_PEQ_WITH_GET_H__
 
 #include <map>
-
-#include "../core/sc_event.hh"
-#include "../core/sc_main.hh"
-#include "../core/sc_object.hh"
-#include "../core/sc_time.hh"
+#include <systemc>
 
 namespace tlm_utils
 {

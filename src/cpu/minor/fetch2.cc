@@ -120,7 +120,6 @@ Fetch2::dumpAllInput(ThreadID tid)
         popInput(tid);
 
     fetchInfo[tid].inputIndex = 0;
-    fetchInfo[tid].havePC = false;
 }
 
 void
@@ -421,8 +420,6 @@ Fetch2::evaluate()
                         loadInstructions++;
                     else if (decoded_inst->isStore())
                         storeInstructions++;
-                    else if (decoded_inst->isAtomic())
-                        amoInstructions++;
                     else if (decoded_inst->isVector())
                         vecInstructions++;
                     else if (decoded_inst->isFloating())
@@ -586,9 +583,7 @@ Fetch2::getScheduledThread()
     }
 
     for (auto tid : priority_list) {
-        if (cpu.getContext(tid)->status() == ThreadContext::Active &&
-            getInput(tid) &&
-            !fetchInfo[tid].blocked) {
+        if (getInput(tid) && !fetchInfo[tid].blocked) {
             threadPriority = tid;
             return tid;
         }
@@ -637,11 +632,6 @@ Fetch2::regStats()
     storeInstructions
         .name(name() + ".store_instructions")
         .desc("Number of memory store instructions successfully decoded")
-        .flags(total);
-
-    amoInstructions
-        .name(name() + ".amo_instructions")
-        .desc("Number of memory atomic instructions successfully decoded")
         .flags(total);
 }
 

@@ -28,8 +28,8 @@
 #          Brad Beckmann
 
 from m5.params import *
-from m5.objects.ClockedObject import ClockedObject
-from m5.objects.SimpleMemory import *
+from ClockedObject import ClockedObject
+from SimpleMemory import *
 
 class RubySystem(ClockedObject):
     type = 'RubySystem'

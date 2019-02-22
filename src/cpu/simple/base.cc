@@ -493,7 +493,7 @@ BaseSimpleCPU::preExecute()
     // maintain $r0 semantics
     thread->setIntReg(ZeroReg, 0);
 #if THE_ISA == ALPHA_ISA
-    thread->setFloatReg(ZeroReg, 0);
+    thread->setFloatRegBits(ZeroReg, 0);
 #endif // ALPHA_ISA
 
     // check for instruction-count-based events
@@ -644,7 +644,7 @@ BaseSimpleCPU::postExecute()
         t_info.numLoadInsts++;
     }
 
-    if (curStaticInst->isStore() || curStaticInst->isAtomic()){
+    if (curStaticInst->isStore()){
         t_info.numStoreInsts++;
     }
     /* End power model statistics */

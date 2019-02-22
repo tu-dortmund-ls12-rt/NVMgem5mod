@@ -248,14 +248,7 @@ Execute::tryToBranch(MinorDynInstPtr inst, Fault fault, BranchData &branch)
             pc_before, target);
     }
 
-    if (thread->status() == ThreadContext::Suspended) {
-        /* Thread got suspended */
-        DPRINTF(Branch, "Thread got suspended: branch from 0x%x to 0x%x "
-            "inst: %s\n",
-            inst->pc.instAddr(), target.instAddr(), *inst);
-
-        reason = BranchData::SuspendThread;
-    } else if (inst->predictedTaken && !force_branch) {
+    if (inst->predictedTaken && !force_branch) {
         /* Predicted to branch */
         if (!must_branch) {
             /* No branch was taken, change stream to get us back to the
@@ -337,7 +330,6 @@ Execute::handleMemResponse(MinorDynInstPtr inst,
 
     bool is_load = inst->staticInst->isLoad();
     bool is_store = inst->staticInst->isStore();
-    bool is_atomic = inst->staticInst->isAtomic();
     bool is_prefetch = inst->staticInst->isDataPrefetch();
 
     /* If true, the trace's predicate value will be taken from the exec
@@ -369,7 +361,7 @@ Execute::handleMemResponse(MinorDynInstPtr inst,
             *inst);
 
         fatal("Received error response packet for inst: %s\n", *inst);
-    } else if (is_store || is_load || is_prefetch || is_atomic) {
+    } else if (is_store || is_load || is_prefetch) {
         assert(packet);
 
         DPRINTF(MinorMem, "Memory response inst: %s addr: 0x%x size: %d\n",
@@ -1683,12 +1675,7 @@ Execute::getCommittingThread()
 
     for (auto tid : priority_list) {
         ExecuteThreadInfo &ex_info = executeInfo[tid];
-
-        bool is_thread_active =
-                cpu.getContext(tid)->status() == ThreadContext::Active;
-        bool can_commit_insts = !ex_info.inFlightInsts->empty() &&
-                                is_thread_active;
-
+        bool can_commit_insts = !ex_info.inFlightInsts->empty();
         if (can_commit_insts) {
             QueuedInst *head_inflight_inst = &(ex_info.inFlightInsts->front());
             MinorDynInstPtr inst = head_inflight_inst->inst;
@@ -1754,8 +1741,7 @@ Execute::getIssuingThread()
     }
 
     for (auto tid : priority_list) {
-        if (cpu.getContext(tid)->status() == ThreadContext::Active &&
-            getInput(tid)) {
+        if (getInput(tid)) {
             issuePriority = tid;
             return tid;
         }

@@ -222,7 +222,7 @@ class Decoder
   protected:
     /// Caching for decoded instruction objects.
 
-    typedef RegVal CacheKey;
+    typedef MiscReg CacheKey;
 
     typedef DecodeCache::AddrMap<Decoder::InstBytes> DecodePages;
     DecodePages *decodePages;

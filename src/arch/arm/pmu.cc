@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014, 2017-2019 ARM Limited
+ * Copyright (c) 2011-2014, 2017-2018 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -54,7 +54,7 @@
 
 namespace ArmISA {
 
-const RegVal PMU::reg_pmcr_wr_mask = 0x39;
+const MiscReg PMU::reg_pmcr_wr_mask = 0x39;
 
 PMU::PMU(const ArmPMUParams *p)
     : SimObject(p), BaseISADevice(),
@@ -67,7 +67,7 @@ PMU::PMU(const ArmPMUParams *p)
       cycleCounterEventId(p->cycleEventId),
       swIncrementEvent(nullptr),
       reg_pmcr_conf(0),
-      interrupt(nullptr)
+      interrupt(p->interrupt->get())
 {
     DPRINTF(PMUVerbose, "Initializing the PMU.\n");
 
@@ -76,7 +76,7 @@ PMU::PMU(const ArmPMUParams *p)
               maximumCounterCount);
     }
 
-    warn_if(!p->interrupt, "ARM PMU: No interrupt specified, interrupt " \
+    warn_if(!interrupt, "ARM PMU: No interrupt specified, interrupt " \
             "delivery disabled.\n");
 
     /* Setup the performance counter ID registers */
@@ -97,10 +97,8 @@ void
 PMU::setThreadContext(ThreadContext *tc)
 {
     DPRINTF(PMUVerbose, "Assigning PMU to ContextID %i.\n", tc->contextId());
-    auto pmu_params = static_cast<const ArmPMUParams *>(params());
-
-    if (pmu_params->interrupt)
-        interrupt = pmu_params->interrupt->get(tc);
+    if (interrupt)
+        interrupt->setThreadContext(tc);
 }
 
 void
@@ -191,7 +189,7 @@ PMU::regProbeListeners()
 }
 
 void
-PMU::setMiscReg(int misc_reg, RegVal val)
+PMU::setMiscReg(int misc_reg, MiscReg val)
 {
     DPRINTF(PMUVerbose, "setMiscReg(%s, 0x%x)\n",
             miscRegName[unflattenMiscReg(misc_reg)], val);
@@ -299,16 +297,16 @@ PMU::setMiscReg(int misc_reg, RegVal val)
          miscRegName[misc_reg]);
 }
 
-RegVal
+MiscReg
 PMU::readMiscReg(int misc_reg)
 {
-    RegVal val(readMiscRegInt(misc_reg));
+    MiscReg val(readMiscRegInt(misc_reg));
     DPRINTF(PMUVerbose, "readMiscReg(%s): 0x%x\n",
             miscRegName[unflattenMiscReg(misc_reg)], val);
     return val;
 }
 
-RegVal
+MiscReg
 PMU::readMiscRegInt(int misc_reg)
 {
     misc_reg = unflattenMiscReg(misc_reg);
@@ -534,10 +532,7 @@ PMU::CounterState::detach()
 void
 PMU::CounterState::attach(PMUEvent* event)
 {
-    if (!resetValue) {
-      value = 0;
-      resetValue = true;
-    }
+    value = 0;
     sourceEvent = event;
     sourceEvent->attachEvent(this);
 }
@@ -650,7 +645,7 @@ PMU::setCounterTypeRegister(CounterId id, PMEVTYPER_t val)
 }
 
 void
-PMU::setOverflowStatus(RegVal new_val)
+PMU::setOverflowStatus(MiscReg new_val)
 {
     const bool int_old = reg_pmovsr != 0;
     const bool int_new = new_val != 0;

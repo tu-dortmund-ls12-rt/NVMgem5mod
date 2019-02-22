@@ -22,15 +22,15 @@
 
 // The unannotated TLM interfaces.
 
-#include "interfaces/core_ifs.hh"
-#include "interfaces/master_slave_ifs.hh"
+#include "tlm_core/1/req_rsp/interfaces/core_ifs.hh"
+#include "tlm_core/1/req_rsp/interfaces/master_slave_ifs.hh"
 
 // The channels : tlm_fifo, tlm_transport_channel and tlm_req_rsp_channel.
 
-#include "channels/req_rsp_channels/req_rsp_channels.hh"
+#include "tlm_core/1/req_rsp/channels/req_rsp_channels/req_rsp_channels.hh"
 
 // Some non blocking ports to provide static sensitivity.
 
-#include "ports/nonblocking_port.hh"
+#include "tlm_core/1/req_rsp/ports/nonblocking_port.hh"
 
 #endif /* __SYSTEMC_EXT_TLM_CORE_1_REQ_RSP_REQ_RSP_HH__ */

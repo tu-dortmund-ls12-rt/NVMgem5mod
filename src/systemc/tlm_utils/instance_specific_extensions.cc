@@ -21,6 +21,8 @@
 
 #include <iostream>
 #include <map>
+#include <systemc>
+#include <tlm>
 #include <typeindex>
 
 namespace tlm

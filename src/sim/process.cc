@@ -623,19 +623,14 @@ ProcessParams::create()
         fatal("Unknown/unsupported operating system.");
     }
 #elif THE_ISA == RISCV_ISA
-    ObjectFile::Arch arch = obj_file->getArch();
-    if (arch != ObjectFile::Riscv64 && arch != ObjectFile::Riscv32)
+    if (obj_file->getArch() != ObjectFile::Riscv)
         fatal("Object file architecture does not match compiled ISA (RISCV).");
     switch (obj_file->getOpSys()) {
       case ObjectFile::UnknownOpSys:
         warn("Unknown operating system; assuming Linux.");
         // fall through
       case ObjectFile::Linux:
-        if (arch == ObjectFile::Riscv64) {
-            process = new RiscvLinuxProcess64(this, obj_file);
-        } else {
-            process = new RiscvLinuxProcess32(this, obj_file);
-        }
+        process = new RiscvLinuxProcess(this, obj_file);
         break;
       default:
         fatal("Unknown/unsupported operating system.");

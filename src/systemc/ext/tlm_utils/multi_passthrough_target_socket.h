@@ -19,9 +19,7 @@
 #ifndef __SYSTEMC_EXT_TLM_UTILS_MULTI_PASSTHROUGH_TARGET_SOCKET_H__
 #define __SYSTEMC_EXT_TLM_UTILS_MULTI_PASSTHROUGH_TARGET_SOCKET_H__
 
-#include "../core/sc_module.hh"
-#include "../core/sc_port.hh"
-#include "multi_socket_bases.h"
+#include "tlm_utils/multi_socket_bases.h"
 
 namespace tlm_utils
 {

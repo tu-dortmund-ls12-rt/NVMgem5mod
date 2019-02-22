@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2016-2017 ARM Limited
+ * Copyright (c) 2011, 2016 ARM Limited
  * Copyright (c) 2013 Advanced Micro Devices, Inc.
  * All rights reserved
  *
@@ -199,7 +199,7 @@ class CheckerCPU : public BaseCPU, public ExecContext
     {
         const RegId& reg = si->srcRegIdx(idx);
         assert(reg.isFloatReg());
-        return thread->readFloatReg(reg.index());
+        return thread->readFloatRegBits(reg.index());
     }
 
     /**
@@ -304,23 +304,7 @@ class CheckerCPU : public BaseCPU, public ExecContext
         return thread->readVecElem(reg);
     }
 
-    const VecPredRegContainer&
-    readVecPredRegOperand(const StaticInst *si, int idx) const override
-    {
-        const RegId& reg = si->srcRegIdx(idx);
-        assert(reg.isVecPredReg());
-        return thread->readVecPredReg(reg);
-    }
-
-    VecPredRegContainer&
-    getWritableVecPredRegOperand(const StaticInst *si, int idx) override
-    {
-        const RegId& reg = si->destRegIdx(idx);
-        assert(reg.isVecPredReg());
-        return thread->getWritableVecPredReg(reg);
-    }
-
-    RegVal
+    CCReg
     readCCRegOperand(const StaticInst *si, int idx) override
     {
         const RegId& reg = si->srcRegIdx(idx);
@@ -352,14 +336,6 @@ class CheckerCPU : public BaseCPU, public ExecContext
                                InstResult::ResultType::VecElem));
     }
 
-    template<typename T>
-    void
-    setVecPredResult(T&& t)
-    {
-        result.push(InstResult(std::forward<T>(t),
-                               InstResult::ResultType::VecPredReg));
-    }
-
     void
     setIntRegOperand(const StaticInst *si, int idx, RegVal val) override
     {
@@ -374,12 +350,12 @@ class CheckerCPU : public BaseCPU, public ExecContext
     {
         const RegId& reg = si->destRegIdx(idx);
         assert(reg.isFloatReg());
-        thread->setFloatReg(reg.index(), val);
+        thread->setFloatRegBits(reg.index(), val);
         setScalarResult(val);
     }
 
     void
-    setCCRegOperand(const StaticInst *si, int idx, RegVal val) override
+    setCCRegOperand(const StaticInst *si, int idx, CCReg val) override
     {
         const RegId& reg = si->destRegIdx(idx);
         assert(reg.isCCReg());
@@ -405,15 +381,6 @@ class CheckerCPU : public BaseCPU, public ExecContext
         assert(reg.isVecElem());
         thread->setVecElem(reg, val);
         setVecElemResult(val);
-    }
-
-    void setVecPredRegOperand(const StaticInst *si, int idx,
-                              const VecPredRegContainer& val) override
-    {
-        const RegId& reg = si->destRegIdx(idx);
-        assert(reg.isVecPredReg());
-        thread->setVecPredReg(reg, val);
-        setVecPredResult(val);
     }
 
     bool readPredicate() const override { return thread->readPredicate(); }
@@ -450,7 +417,7 @@ class CheckerCPU : public BaseCPU, public ExecContext
     }
 
     void
-    setMiscRegNoEffect(int misc_reg, RegVal val)
+    setMiscRegNoEffect(int misc_reg, const RegVal &val)
     {
         DPRINTF(Checker, "Setting misc reg %d with no effect to check later\n",
                 misc_reg);
@@ -459,7 +426,7 @@ class CheckerCPU : public BaseCPU, public ExecContext
     }
 
     void
-    setMiscReg(int misc_reg, RegVal val) override
+    setMiscReg(int misc_reg, const RegVal &val) override
     {
         DPRINTF(Checker, "Setting misc reg %d with effect to check later\n",
                 misc_reg);
@@ -476,7 +443,8 @@ class CheckerCPU : public BaseCPU, public ExecContext
     }
 
     void
-    setMiscRegOperand(const StaticInst *si, int idx, RegVal val) override
+    setMiscRegOperand(const StaticInst *si, int idx,
+                      const RegVal &val) override
     {
         const RegId& reg = si->destRegIdx(idx);
         assert(reg.isMiscReg());
@@ -536,15 +504,8 @@ class CheckerCPU : public BaseCPU, public ExecContext
 
     Fault readMem(Addr addr, uint8_t *data, unsigned size,
                   Request::Flags flags) override;
-
     Fault writeMem(uint8_t *data, unsigned size, Addr addr,
                    Request::Flags flags, uint64_t *res) override;
-
-    Fault amoMem(Addr addr, uint8_t* data, unsigned size,
-                 Request::Flags flags, AtomicOpFunctor *amo_op) override
-    {
-        panic("AMO is not supported yet in CPU checker\n");
-    }
 
     unsigned int
     readStCondFailures() const override {

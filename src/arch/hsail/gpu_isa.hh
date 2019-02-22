@@ -45,6 +45,8 @@
 
 namespace HsailISA
 {
+    typedef uint64_t MiscReg;
+
     class GPUISA
     {
       public:
@@ -53,12 +55,12 @@ namespace HsailISA
         }
 
         void
-        writeMiscReg(int opIdx, RegVal operandVal)
+        writeMiscReg(int opIdx, MiscReg operandVal)
         {
             fatal("HSAIL does not implement misc registers yet\n");
         }
 
-        RegVal
+        MiscReg
         readMiscReg(int opIdx) const
         {
             fatal("HSAIL does not implement misc registers yet\n");

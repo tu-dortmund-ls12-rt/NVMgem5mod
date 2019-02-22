@@ -19,6 +19,8 @@
 #ifndef __SYSTEMC_EXT_TLM_UTILS_CONVENIENCE_SOCKET_BASES_H__
 #define __SYSTEMC_EXT_TLM_UTILS_CONVENIENCE_SOCKET_BASES_H__
 
+#include <systemc>
+
 namespace sc_core
 {
 

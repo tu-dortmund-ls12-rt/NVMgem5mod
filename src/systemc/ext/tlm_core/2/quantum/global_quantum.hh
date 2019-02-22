@@ -20,7 +20,7 @@
 #ifndef __SYSTEMC_EXT_TLM_CORE_2_QUANTUM_GLOBAL_QUANTUM_HH__
 #define __SYSTEMC_EXT_TLM_CORE_2_QUANTUM_GLOBAL_QUANTUM_HH__
 
-#include "../../../core/sc_time.hh"
+#include <systemc>
 
 namespace tlm
 {

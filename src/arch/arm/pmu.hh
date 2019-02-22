@@ -121,14 +121,14 @@ class PMU : public SimObject, public ArmISA::BaseISADevice {
      * @param misc_reg Register number (see miscregs.hh)
      * @param val Value to store
      */
-    void setMiscReg(int misc_reg, RegVal val) override;
+    void setMiscReg(int misc_reg, MiscReg val) override;
     /**
      * Read a register within the PMU.
      *
      * @param misc_reg Register number (see miscregs.hh)
      * @return Register value.
      */
-    RegVal readMiscReg(int misc_reg) override;
+    MiscReg readMiscReg(int misc_reg) override;
 
   protected: // PMU register types and constants
     BitUnion32(PMCR_t)
@@ -196,7 +196,7 @@ class PMU : public SimObject, public ArmISA::BaseISADevice {
     typedef unsigned int EventTypeId;
 
   protected: /* High-level register and interrupt handling */
-    RegVal readMiscRegInt(int misc_reg);
+    MiscReg readMiscRegInt(int misc_reg);
 
     /**
      * PMCR write handling
@@ -284,7 +284,7 @@ class PMU : public SimObject, public ArmISA::BaseISADevice {
      *
      * @param new_val New value of the Overflow Status Register
      */
-    void setOverflowStatus(RegVal new_val);
+    void setOverflowStatus(MiscReg new_val);
 
   protected: /* Probe handling and counter state */
     struct CounterState;
@@ -570,7 +570,7 @@ class PMU : public SimObject, public ArmISA::BaseISADevice {
 
   protected: /* State that needs to be serialized */
     /** Performance Monitor Count Enable Register */
-    RegVal reg_pmcnten;
+    MiscReg reg_pmcnten;
 
     /** Performance Monitor Control Register */
     PMCR_t reg_pmcr;
@@ -579,10 +579,10 @@ class PMU : public SimObject, public ArmISA::BaseISADevice {
     PMSELR_t reg_pmselr;
 
     /** Performance Monitor Interrupt Enable Register */
-    RegVal reg_pminten;
+    MiscReg reg_pminten;
 
     /** Performance Monitor Overflow Status Register */
-    RegVal reg_pmovsr;
+    MiscReg reg_pmovsr;
 
     /**
      * Performance counter ID register
@@ -616,10 +616,10 @@ class PMU : public SimObject, public ArmISA::BaseISADevice {
     PMCR_t reg_pmcr_conf;
 
     /** PMCR write mask when accessed from the guest */
-    static const RegVal reg_pmcr_wr_mask;
+    static const MiscReg reg_pmcr_wr_mask;
 
     /** Performance monitor interrupt number */
-    ArmInterruptPin *interrupt;
+    ArmInterruptPin *const interrupt;
 
     /**
      * List of event types supported by this PMU.

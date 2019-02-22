@@ -362,7 +362,7 @@ namespace ArmISA
 
         void initializeMiscRegMetadata();
 
-        RegVal miscRegs[NumMiscRegs];
+        MiscReg miscRegs[NumMiscRegs];
         const IntRegIndex *intRegMap;
 
         void
@@ -428,10 +428,10 @@ namespace ArmISA
         void initID64(const ArmISAParams *p);
 
       public:
-        RegVal readMiscRegNoEffect(int misc_reg) const;
-        RegVal readMiscReg(int misc_reg, ThreadContext *tc);
-        void setMiscRegNoEffect(int misc_reg, RegVal val);
-        void setMiscReg(int misc_reg, RegVal val, ThreadContext *tc);
+        MiscReg readMiscRegNoEffect(int misc_reg) const;
+        MiscReg readMiscReg(int misc_reg, ThreadContext *tc);
+        void setMiscRegNoEffect(int misc_reg, const MiscReg &val);
+        void setMiscReg(int misc_reg, const MiscReg &val, ThreadContext *tc);
 
         RegId
         flattenRegId(const RegId& regId) const
@@ -446,9 +446,6 @@ namespace ArmISA
               case VecElemClass:
                 return RegId(VecElemClass, flattenVecElemIndex(regId.index()),
                              regId.elemIndex());
-              case VecPredRegClass:
-                return RegId(VecPredRegClass,
-                             flattenVecPredIndex(regId.index()));
               case CCRegClass:
                 return RegId(CCRegClass, flattenCCIndex(regId.index()));
               case MiscRegClass:
@@ -505,13 +502,6 @@ namespace ArmISA
 
         int
         flattenVecElemIndex(int reg) const
-        {
-            assert(reg >= 0);
-            return reg;
-        }
-
-        int
-        flattenVecPredIndex(int reg) const
         {
             assert(reg >= 0);
             return reg;
@@ -709,28 +699,15 @@ namespace ArmISA
 }
 
 template<>
-struct RenameMode<ArmISA::ISA>
+struct initRenameMode<ArmISA::ISA>
 {
-    static Enums::VecRegRenameMode
-    init(const ArmISA::ISA* isa)
+    static Enums::VecRegRenameMode mode(const ArmISA::ISA* isa)
     {
         return isa->vecRegRenameMode();
     }
-
-    static Enums::VecRegRenameMode
-    mode(const ArmISA::PCState& pc)
+    static bool equals(const ArmISA::ISA* isa1, const ArmISA::ISA* isa2)
     {
-        if (pc.aarch64()) {
-            return Enums::Full;
-        } else {
-            return Enums::Elem;
-        }
-    }
-
-    static bool
-    equalsInit(const ArmISA::ISA* isa1, const ArmISA::ISA* isa2)
-    {
-        return init(isa1) == init(isa2);
+        return mode(isa1) == mode(isa2);
     }
 };
 

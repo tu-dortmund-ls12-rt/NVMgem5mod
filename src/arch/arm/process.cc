@@ -482,21 +482,21 @@ ArmProcess::argsInit(int pageSize, IntRegIndex spIndex)
     memState->setStackMin(roundDown(memState->getStackMin(), pageSize));
 }
 
-RegVal
+ArmISA::IntReg
 ArmProcess32::getSyscallArg(ThreadContext *tc, int &i)
 {
     assert(i < 6);
     return tc->readIntReg(ArgumentReg0 + i++);
 }
 
-RegVal
+ArmISA::IntReg
 ArmProcess64::getSyscallArg(ThreadContext *tc, int &i)
 {
     assert(i < 8);
     return tc->readIntReg(ArgumentReg0 + i++);
 }
 
-RegVal
+ArmISA::IntReg
 ArmProcess32::getSyscallArg(ThreadContext *tc, int &i, int width)
 {
     assert(width == 32 || width == 64);
@@ -515,7 +515,7 @@ ArmProcess32::getSyscallArg(ThreadContext *tc, int &i, int width)
     return val;
 }
 
-RegVal
+ArmISA::IntReg
 ArmProcess64::getSyscallArg(ThreadContext *tc, int &i, int width)
 {
     return getSyscallArg(tc, i);
@@ -523,14 +523,14 @@ ArmProcess64::getSyscallArg(ThreadContext *tc, int &i, int width)
 
 
 void
-ArmProcess32::setSyscallArg(ThreadContext *tc, int i, RegVal val)
+ArmProcess32::setSyscallArg(ThreadContext *tc, int i, ArmISA::IntReg val)
 {
     assert(i < 6);
     tc->setIntReg(ArgumentReg0 + i, val);
 }
 
 void
-ArmProcess64::setSyscallArg(ThreadContext *tc, int i, RegVal val)
+ArmProcess64::setSyscallArg(ThreadContext *tc, int i, ArmISA::IntReg val)
 {
     assert(i < 8);
     tc->setIntReg(ArgumentReg0 + i, val);

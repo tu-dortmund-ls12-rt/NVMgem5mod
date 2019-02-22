@@ -17,9 +17,8 @@
 
  *****************************************************************************/
 
-#include "systemc/ext/core/sc_main.hh"
-#include "systemc/ext/core/sc_time.hh"
-#include "systemc/ext/tlm_core/2/quantum/global_quantum.hh"
+#include <systemc>
+#include <tlm>
 
 namespace tlm
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2016-2017 ARM Limited
+ * Copyright (c) 2012, 2016 ARM Limited
  * Copyright (c) 2013 Advanced Micro Devices, Inc.
  * All rights reserved
  *
@@ -43,7 +43,6 @@
 
 #include "cpu/thread_context.hh"
 
-#include "arch/generic/vec_pred_reg.hh"
 #include "arch/kernel_stats.hh"
 #include "base/logging.hh"
 #include "base/trace.hh"
@@ -71,8 +70,8 @@ ThreadContext::compare(ThreadContext *one, ThreadContext *two)
 
     // Then loop through the floating point registers.
     for (int i = 0; i < TheISA::NumFloatRegs; ++i) {
-        RegVal t1 = one->readFloatReg(i);
-        RegVal t2 = two->readFloatReg(i);
+        RegVal t1 = one->readFloatRegBits(i);
+        RegVal t2 = two->readFloatRegBits(i);
         if (t1 != t2)
             panic("Float reg idx %d doesn't match, one: %#x, two: %#x",
                   i, t1, t2);
@@ -87,17 +86,6 @@ ThreadContext::compare(ThreadContext *one, ThreadContext *two)
             panic("Vec reg idx %d doesn't match, one: %#x, two: %#x",
                   i, t1, t2);
     }
-
-    // Then loop through the predicate registers.
-    for (int i = 0; i < TheISA::NumVecPredRegs; ++i) {
-        RegId rid(VecPredRegClass, i);
-        const TheISA::VecPredRegContainer& t1 = one->readVecPredReg(rid);
-        const TheISA::VecPredRegContainer& t2 = two->readVecPredReg(rid);
-        if (t1 != t2)
-            panic("Pred reg idx %d doesn't match, one: %#x, two: %#x",
-                  i, t1, t2);
-    }
-
     for (int i = 0; i < TheISA::NumMiscRegs; ++i) {
         RegVal t1 = one->readMiscRegNoEffect(i);
         RegVal t2 = two->readMiscRegNoEffect(i);
@@ -108,8 +96,8 @@ ThreadContext::compare(ThreadContext *one, ThreadContext *two)
 
     // loop through the Condition Code registers.
     for (int i = 0; i < TheISA::NumCCRegs; ++i) {
-        RegVal t1 = one->readCCReg(i);
-        RegVal t2 = two->readCCReg(i);
+        TheISA::CCReg t1 = one->readCCReg(i);
+        TheISA::CCReg t2 = two->readCCReg(i);
         if (t1 != t2)
             panic("CC reg idx %d doesn't match, one: %#x, two: %#x",
                   i, t1, t2);
@@ -169,7 +157,7 @@ serialize(ThreadContext &tc, CheckpointOut &cp)
 
     RegVal floatRegs[NumFloatRegs];
     for (int i = 0; i < NumFloatRegs; ++i)
-        floatRegs[i] = tc.readFloatRegFlat(i);
+        floatRegs[i] = tc.readFloatRegBitsFlat(i);
     // This is a bit ugly, but needed to maintain backwards
     // compatibility.
     arrayParamOut(cp, "floatRegs.i", floatRegs, NumFloatRegs);
@@ -180,19 +168,13 @@ serialize(ThreadContext &tc, CheckpointOut &cp)
     }
     SERIALIZE_CONTAINER(vecRegs);
 
-    std::vector<TheISA::VecPredRegContainer> vecPredRegs(NumVecPredRegs);
-    for (int i = 0; i < NumVecPredRegs; ++i) {
-        vecPredRegs[i] = tc.readVecPredRegFlat(i);
-    }
-    SERIALIZE_CONTAINER(vecPredRegs);
-
     RegVal intRegs[NumIntRegs];
     for (int i = 0; i < NumIntRegs; ++i)
         intRegs[i] = tc.readIntRegFlat(i);
     SERIALIZE_ARRAY(intRegs, NumIntRegs);
 
 #ifdef ISA_HAS_CC_REGS
-    RegVal ccRegs[NumCCRegs];
+    CCReg ccRegs[NumCCRegs];
     for (int i = 0; i < NumCCRegs; ++i)
         ccRegs[i] = tc.readCCRegFlat(i);
     SERIALIZE_ARRAY(ccRegs, NumCCRegs);
@@ -213,18 +195,12 @@ unserialize(ThreadContext &tc, CheckpointIn &cp)
     // compatibility.
     arrayParamIn(cp, "floatRegs.i", floatRegs, NumFloatRegs);
     for (int i = 0; i < NumFloatRegs; ++i)
-        tc.setFloatRegFlat(i, floatRegs[i]);
+        tc.setFloatRegBitsFlat(i, floatRegs[i]);
 
     std::vector<TheISA::VecRegContainer> vecRegs(NumVecRegs);
     UNSERIALIZE_CONTAINER(vecRegs);
     for (int i = 0; i < NumVecRegs; ++i) {
         tc.setVecRegFlat(i, vecRegs[i]);
-    }
-
-    std::vector<TheISA::VecPredRegContainer> vecPredRegs(NumVecPredRegs);
-    UNSERIALIZE_CONTAINER(vecPredRegs);
-    for (int i = 0; i < NumVecPredRegs; ++i) {
-        tc.setVecPredRegFlat(i, vecPredRegs[i]);
     }
 
     RegVal intRegs[NumIntRegs];
@@ -233,7 +209,7 @@ unserialize(ThreadContext &tc, CheckpointIn &cp)
         tc.setIntRegFlat(i, intRegs[i]);
 
 #ifdef ISA_HAS_CC_REGS
-    RegVal ccRegs[NumCCRegs];
+    CCReg ccRegs[NumCCRegs];
     UNSERIALIZE_ARRAY(ccRegs, NumCCRegs);
     for (int i = 0; i < NumCCRegs; ++i)
         tc.setCCRegFlat(i, ccRegs[i]);

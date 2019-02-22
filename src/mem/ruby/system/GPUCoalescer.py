@@ -34,8 +34,7 @@
 
 from m5.params import *
 from m5.proxy import *
-
-from m5.objects.Sequencer import *
+from Sequencer import *
 
 class RubyGPUCoalescer(RubyPort):
    type = 'RubyGPUCoalescer'

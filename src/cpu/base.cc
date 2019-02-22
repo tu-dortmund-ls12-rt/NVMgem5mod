@@ -409,7 +409,7 @@ BaseCPU::probeInstCommit(const StaticInstPtr &inst)
     if (inst->isLoad())
         ppRetiredLoads->notify(1);
 
-    if (inst->isStore() || inst->isAtomic())
+    if (inst->isStore())
         ppRetiredStores->notify(1);
 
     if (inst->isControl())

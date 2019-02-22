@@ -38,8 +38,8 @@
 from m5.params import *
 from m5.SimObject import *
 
-from m5.objects.Serial import SerialDevice
-from m5.objects.Terminal import Terminal
+from Serial import SerialDevice
+from Terminal import Terminal
 
 class ArmSemihosting(SimObject):
     type = 'ArmSemihosting'

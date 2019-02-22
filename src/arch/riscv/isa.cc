@@ -95,7 +95,7 @@ ISA::hpmCounterEnabled(int misc_reg) const
     return (miscRegFile[counteren] & (1ULL << (hpmcounter))) > 0;
 }
 
-RegVal
+MiscReg
 ISA::readMiscRegNoEffect(int misc_reg) const
 {
     if (misc_reg > NumMiscRegs || misc_reg < 0) {
@@ -108,7 +108,7 @@ ISA::readMiscRegNoEffect(int misc_reg) const
     return miscRegFile[misc_reg];
 }
 
-RegVal
+MiscReg
 ISA::readMiscReg(int misc_reg, ThreadContext *tc)
 {
     switch (misc_reg) {
@@ -164,7 +164,7 @@ ISA::readMiscReg(int misc_reg, ThreadContext *tc)
 }
 
 void
-ISA::setMiscRegNoEffect(int misc_reg, RegVal val)
+ISA::setMiscRegNoEffect(int misc_reg, const MiscReg &val)
 {
     if (misc_reg > NumMiscRegs || misc_reg < 0) {
         // Illegal CSR
@@ -175,7 +175,7 @@ ISA::setMiscRegNoEffect(int misc_reg, RegVal val)
 }
 
 void
-ISA::setMiscReg(int misc_reg, RegVal val, ThreadContext *tc)
+ISA::setMiscReg(int misc_reg, const MiscReg &val, ThreadContext *tc)
 {
     if (misc_reg >= MISCREG_CYCLE && misc_reg <= MISCREG_HPMCOUNTER31) {
         // Ignore writes to HPM counters for now

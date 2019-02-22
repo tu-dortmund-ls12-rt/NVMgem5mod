@@ -370,8 +370,8 @@ if main['GCC'] or main['CLANG']:
     # Treat warnings as errors but white list some warnings that we
     # want to allow (e.g., deprecation warnings).
     #main.Append(CCFLAGS=['-Werror',
-                         '-Wno-error=deprecated-declarations',
-                         '-Wno-error=deprecated',
+    #                     '-Wno-error=deprecated-declarations',
+    #                     '-Wno-error=deprecated',
     #                    ])
 else:
     print(termcap.Yellow + termcap.Bold + 'Error' + termcap.Normal, end=' ')
@@ -1081,9 +1081,6 @@ for root, dirs, files in os.walk(ext_dir):
         ext_build_dirs.append(build_dir)
         main.SConscript(joinpath(root, 'SConscript'),
                         variant_dir=joinpath(build_root, build_dir))
-
-gdb_xml_dir = joinpath(ext_dir, 'gdb-xml')
-Export('gdb_xml_dir')
 
 main.Prepend(CPPPATH=Dir('ext/pybind11/include/'))
 

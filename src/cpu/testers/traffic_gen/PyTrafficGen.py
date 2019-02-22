@@ -37,8 +37,7 @@
 
 from m5.defines import buildEnv
 from m5.SimObject import *
-
-from m5.objects.BaseTrafficGen import *
+from BaseTrafficGen import *
 
 class PyTrafficGen(BaseTrafficGen):
     type = 'PyTrafficGen'

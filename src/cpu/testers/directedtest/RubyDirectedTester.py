@@ -27,10 +27,9 @@
 # Authors: Brad Beckmann
 
 from m5.SimObject import SimObject
+from MemObject import MemObject
 from m5.params import *
 from m5.proxy import *
-
-from m5.objects.MemObject import MemObject
 
 class DirectedGenerator(SimObject):
     type = 'DirectedGenerator'

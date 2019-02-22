@@ -183,7 +183,7 @@ Sparc64Process::initState()
     pstate.ie = 1;
     tc->setMiscReg(MISCREG_PSTATE, pstate);
 
-    argsInit(sizeof(RegVal), PageBytes);
+    argsInit(sizeof(IntReg), PageBytes);
 }
 
 template<class IntType>
@@ -441,11 +441,11 @@ Sparc32Process::argsInit(int intSize, int pageSize)
 
 void Sparc32Process::flushWindows(ThreadContext *tc)
 {
-    RegVal Cansave = tc->readIntReg(NumIntArchRegs + 3);
-    RegVal Canrestore = tc->readIntReg(NumIntArchRegs + 4);
-    RegVal Otherwin = tc->readIntReg(NumIntArchRegs + 6);
-    RegVal CWP = tc->readMiscReg(MISCREG_CWP);
-    RegVal origCWP = CWP;
+    IntReg Cansave = tc->readIntReg(NumIntArchRegs + 3);
+    IntReg Canrestore = tc->readIntReg(NumIntArchRegs + 4);
+    IntReg Otherwin = tc->readIntReg(NumIntArchRegs + 6);
+    MiscReg CWP = tc->readMiscReg(MISCREG_CWP);
+    MiscReg origCWP = CWP;
     CWP = (CWP + Cansave + 2) % NWindows;
     while (NWindows - 2 - Cansave != 0) {
         if (Otherwin) {
@@ -453,7 +453,7 @@ void Sparc32Process::flushWindows(ThreadContext *tc)
         } else {
             tc->setMiscReg(MISCREG_CWP, CWP);
             // Do the stores
-            RegVal sp = tc->readIntReg(StackPointerReg);
+            IntReg sp = tc->readIntReg(StackPointerReg);
             for (int index = 16; index < 32; index++) {
                 uint32_t regVal = tc->readIntReg(index);
                 regVal = htog(regVal);
@@ -476,11 +476,11 @@ void Sparc32Process::flushWindows(ThreadContext *tc)
 void
 Sparc64Process::flushWindows(ThreadContext *tc)
 {
-    RegVal Cansave = tc->readIntReg(NumIntArchRegs + 3);
-    RegVal Canrestore = tc->readIntReg(NumIntArchRegs + 4);
-    RegVal Otherwin = tc->readIntReg(NumIntArchRegs + 6);
-    RegVal CWP = tc->readMiscReg(MISCREG_CWP);
-    RegVal origCWP = CWP;
+    IntReg Cansave = tc->readIntReg(NumIntArchRegs + 3);
+    IntReg Canrestore = tc->readIntReg(NumIntArchRegs + 4);
+    IntReg Otherwin = tc->readIntReg(NumIntArchRegs + 6);
+    MiscReg CWP = tc->readMiscReg(MISCREG_CWP);
+    MiscReg origCWP = CWP;
     CWP = (CWP + Cansave + 2) % NWindows;
     while (NWindows - 2 - Cansave != 0) {
         if (Otherwin) {
@@ -488,9 +488,9 @@ Sparc64Process::flushWindows(ThreadContext *tc)
         } else {
             tc->setMiscReg(MISCREG_CWP, CWP);
             // Do the stores
-            RegVal sp = tc->readIntReg(StackPointerReg);
+            IntReg sp = tc->readIntReg(StackPointerReg);
             for (int index = 16; index < 32; index++) {
-                RegVal regVal = tc->readIntReg(index);
+                IntReg regVal = tc->readIntReg(index);
                 regVal = htog(regVal);
                 if (!tc->getMemProxy().tryWriteBlob(
                         sp + 2047 + (index - 16) * 8, (uint8_t *)&regVal, 8)) {
@@ -508,7 +508,7 @@ Sparc64Process::flushWindows(ThreadContext *tc)
     tc->setMiscReg(MISCREG_CWP, origCWP);
 }
 
-RegVal
+IntReg
 Sparc32Process::getSyscallArg(ThreadContext *tc, int &i)
 {
     assert(i < 6);
@@ -516,13 +516,13 @@ Sparc32Process::getSyscallArg(ThreadContext *tc, int &i)
 }
 
 void
-Sparc32Process::setSyscallArg(ThreadContext *tc, int i, RegVal val)
+Sparc32Process::setSyscallArg(ThreadContext *tc, int i, IntReg val)
 {
     assert(i < 6);
     tc->setIntReg(FirstArgumentReg + i, bits(val, 31, 0));
 }
 
-RegVal
+IntReg
 Sparc64Process::getSyscallArg(ThreadContext *tc, int &i)
 {
     assert(i < 6);
@@ -530,7 +530,7 @@ Sparc64Process::getSyscallArg(ThreadContext *tc, int &i)
 }
 
 void
-Sparc64Process::setSyscallArg(ThreadContext *tc, int i, RegVal val)
+Sparc64Process::setSyscallArg(ThreadContext *tc, int i, IntReg val)
 {
     assert(i < 6);
     tc->setIntReg(FirstArgumentReg + i, val);
@@ -547,7 +547,7 @@ SparcProcess::setSyscallReturn(ThreadContext *tc, SyscallReturn sysret)
         // no error, clear XCC.C
         tc->setIntReg(NumIntArchRegs + 2,
                       tc->readIntReg(NumIntArchRegs + 2) & 0xEE);
-        RegVal val = sysret.returnValue();
+        IntReg val = sysret.returnValue();
         if (pstate.am)
             val = bits(val, 31, 0);
         tc->setIntReg(ReturnValueReg, val);
@@ -555,7 +555,7 @@ SparcProcess::setSyscallReturn(ThreadContext *tc, SyscallReturn sysret)
         // got an error, set XCC.C
         tc->setIntReg(NumIntArchRegs + 2,
                       tc->readIntReg(NumIntArchRegs + 2) | 0x11);
-        RegVal val = sysret.errnoValue();
+        IntReg val = sysret.errnoValue();
         if (pstate.am)
             val = bits(val, 31, 0);
         tc->setIntReg(ReturnValueReg, val);

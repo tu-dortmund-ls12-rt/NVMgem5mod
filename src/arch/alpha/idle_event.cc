@@ -40,7 +40,7 @@ void
 IdleStartEvent::process(ThreadContext *tc)
 {
     if (tc->getKernelStats()) {
-        RegVal val = tc->readMiscRegNoEffect(IPR_PALtemp23);
+        MiscReg val = tc->readMiscRegNoEffect(IPR_PALtemp23);
         tc->getKernelStats()->setIdleProcess(val, tc);
     }
     remove();

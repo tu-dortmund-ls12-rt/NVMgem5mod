@@ -20,7 +20,7 @@
 #ifndef __SYSTEMC_EXT_TLM_CORE_1_REQ_RSP_INTERFACES_CORE_IFS_HH__
 #define __SYSTEMC_EXT_TLM_CORE_1_REQ_RSP_INTERFACES_CORE_IFS_HH__
 
-#include "tag.hh"
+#include "tlm_core/1/req_rsp/interfaces/tag.hh"
 
 namespace tlm
 {

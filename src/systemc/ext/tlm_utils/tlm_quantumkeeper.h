@@ -20,7 +20,7 @@
 #ifndef __SYSTEMC_EXT_TLM_UTILS_TLM_QUANTUMKEEPER_H__
 #define __SYSTEMC_EXT_TLM_UTILS_TLM_QUANTUMKEEPER_H__
 
-#include "../core/sc_time.hh"
+#include <tlm>
 
 namespace tlm_utils
 {

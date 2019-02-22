@@ -69,6 +69,8 @@ BaseDynInst<Impl>::BaseDynInst(const StaticInstPtr &_staticInst,
     macroop(_macroop),
     memData(nullptr),
     savedReq(nullptr),
+    savedSreqLow(nullptr),
+    savedSreqHigh(nullptr),
     reqToVerify(nullptr)
 {
     seqNum = seq_num;
@@ -94,7 +96,8 @@ BaseDynInst<Impl>::initVars()
 {
     memData = NULL;
     effAddr = 0;
-    physEffAddr = 0;
+    physEffAddrLow = 0;
+    physEffAddrHigh = 0;
     readyRegs = 0;
     memReqFlags = 0;
 

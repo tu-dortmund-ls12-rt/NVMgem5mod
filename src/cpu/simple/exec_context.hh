@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 ARM Limited
+ * Copyright (c) 2014-2016 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -60,6 +60,7 @@ class BaseSimpleCPU;
 
 class SimpleExecContext : public ExecContext {
   protected:
+    typedef TheISA::CCReg CCReg;
     using VecRegContainer = TheISA::VecRegContainer;
     using VecElem = TheISA::VecElem;
 
@@ -119,10 +120,6 @@ class SimpleExecContext : public ExecContext {
     // Number of vector register file accesses
     mutable Stats::Scalar numVecRegReads;
     Stats::Scalar numVecRegWrites;
-
-    // Number of predicate register file accesses
-    mutable Stats::Scalar numVecPredRegReads;
-    Stats::Scalar numVecPredRegWrites;
 
     // Number of condition code register file accesses
     Stats::Scalar numCCRegReads;
@@ -201,7 +198,7 @@ class SimpleExecContext : public ExecContext {
         numFpRegReads++;
         const RegId& reg = si->srcRegIdx(idx);
         assert(reg.isFloatReg());
-        return thread->readFloatReg(reg.index());
+        return thread->readFloatRegBits(reg.index());
     }
 
     /** Sets the bits of a floating point register of single width
@@ -212,7 +209,7 @@ class SimpleExecContext : public ExecContext {
         numFpRegWrites++;
         const RegId& reg = si->destRegIdx(idx);
         assert(reg.isFloatReg());
-        thread->setFloatReg(reg.index(), val);
+        thread->setFloatRegBits(reg.index(), val);
     }
 
     /** Reads a vector register. */
@@ -320,7 +317,7 @@ class SimpleExecContext : public ExecContext {
     readVecElemOperand(const StaticInst *si, int idx) const override
     {
         numVecRegReads++;
-        const RegId& reg = si->srcRegIdx(idx);
+        const RegId& reg = si->destRegIdx(idx);
         assert(reg.isVecElem());
         return thread->readVecElem(reg);
     }
@@ -336,35 +333,7 @@ class SimpleExecContext : public ExecContext {
         thread->setVecElem(reg, val);
     }
 
-    const VecPredRegContainer&
-    readVecPredRegOperand(const StaticInst *si, int idx) const override
-    {
-        numVecPredRegReads++;
-        const RegId& reg = si->srcRegIdx(idx);
-        assert(reg.isVecPredReg());
-        return thread->readVecPredReg(reg);
-    }
-
-    VecPredRegContainer&
-    getWritableVecPredRegOperand(const StaticInst *si, int idx) override
-    {
-        numVecPredRegWrites++;
-        const RegId& reg = si->destRegIdx(idx);
-        assert(reg.isVecPredReg());
-        return thread->getWritableVecPredReg(reg);
-    }
-
-    void
-    setVecPredRegOperand(const StaticInst *si, int idx,
-                         const VecPredRegContainer& val) override
-    {
-        numVecPredRegWrites++;
-        const RegId& reg = si->destRegIdx(idx);
-        assert(reg.isVecPredReg());
-        thread->setVecPredReg(reg, val);
-    }
-
-    RegVal
+    CCReg
     readCCRegOperand(const StaticInst *si, int idx) override
     {
         numCCRegReads++;
@@ -374,7 +343,7 @@ class SimpleExecContext : public ExecContext {
     }
 
     void
-    setCCRegOperand(const StaticInst *si, int idx, RegVal val) override
+    setCCRegOperand(const StaticInst *si, int idx, CCReg val) override
     {
         numCCRegWrites++;
         const RegId& reg = si->destRegIdx(idx);
@@ -392,7 +361,8 @@ class SimpleExecContext : public ExecContext {
     }
 
     void
-    setMiscRegOperand(const StaticInst *si, int idx, RegVal val) override
+    setMiscRegOperand(const StaticInst *si, int idx,
+                      const RegVal &val) override
     {
         numIntRegWrites++;
         const RegId& reg = si->destRegIdx(idx);
@@ -416,7 +386,7 @@ class SimpleExecContext : public ExecContext {
      * side effects due to writing that register.
      */
     void
-    setMiscReg(int misc_reg, RegVal val) override
+    setMiscReg(int misc_reg, const RegVal &val) override
     {
         numIntRegWrites++;
         thread->setMiscReg(misc_reg, val);
@@ -454,19 +424,6 @@ class SimpleExecContext : public ExecContext {
              Request::Flags flags, uint64_t *res) override
     {
         return cpu->writeMem(data, size, addr, flags, res);
-    }
-
-    Fault amoMem(Addr addr, uint8_t *data, unsigned int size,
-                 Request::Flags flags, AtomicOpFunctor *amo_op) override
-    {
-        return cpu->amoMem(addr, data, size, flags, amo_op);
-    }
-
-    Fault initiateMemAMO(Addr addr, unsigned int size,
-                         Request::Flags flags,
-                         AtomicOpFunctor *amo_op) override
-    {
-        return cpu->initiateMemAMO(addr, size, flags, amo_op);
     }
 
     /**

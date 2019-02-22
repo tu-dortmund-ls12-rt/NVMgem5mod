@@ -145,24 +145,6 @@ skipFunction(ThreadContext *tc)
     }
 }
 
-static void
-copyVecRegs(ThreadContext *src, ThreadContext *dest)
-{
-    auto src_mode = RenameMode<ArmISA::ISA>::mode(src->pcState());
-
-    // The way vector registers are copied (VecReg vs VecElem) is relevant
-    // in the O3 model only.
-    if (src_mode == Enums::Full) {
-        for (auto idx = 0; idx < NumVecRegs; idx++)
-            dest->setVecRegFlat(idx, src->readVecRegFlat(idx));
-    } else {
-        for (auto idx = 0; idx < NumVecRegs; idx++)
-            for (auto elem_idx = 0; elem_idx < NumVecElemPerVecReg; elem_idx++)
-                dest->setVecElemFlat(
-                    idx, elem_idx, src->readVecElemFlat(idx, elem_idx));
-    }
-}
-
 void
 copyRegs(ThreadContext *src, ThreadContext *dest)
 {
@@ -170,15 +152,16 @@ copyRegs(ThreadContext *src, ThreadContext *dest)
         dest->setIntRegFlat(i, src->readIntRegFlat(i));
 
     for (int i = 0; i < NumFloatRegs; i++)
-        dest->setFloatRegFlat(i, src->readFloatRegFlat(i));
+        dest->setFloatRegBitsFlat(i, src->readFloatRegBitsFlat(i));
+
+    for (int i = 0; i < NumVecRegs; i++)
+        dest->setVecRegFlat(i, src->readVecRegFlat(i));
 
     for (int i = 0; i < NumCCRegs; i++)
         dest->setCCReg(i, src->readCCReg(i));
 
     for (int i = 0; i < NumMiscRegs; i++)
         dest->setMiscRegNoEffect(i, src->readMiscRegNoEffect(i));
-
-    copyVecRegs(src, dest);
 
     // setMiscReg "with effect" will set the misc register mapping correctly.
     // e.g. updateRegMap(val)
@@ -222,7 +205,7 @@ longDescFormatInUse(ThreadContext *tc)
     return ArmSystem::haveLPAE(tc) && ttbcr.eae;
 }
 
-RegVal
+MiscReg
 readMPIDR(ArmSystem *arm_sys, ThreadContext *tc)
 {
     CPSR cpsr = tc->readMiscReg(MISCREG_CPSR);
@@ -252,7 +235,7 @@ readMPIDR(ArmSystem *arm_sys, ThreadContext *tc)
     }
 }
 
-RegVal
+MiscReg
 getMPIDR(ArmSystem *arm_sys, ThreadContext *tc)
 {
     // Multiprocessor Affinity Register MPIDR from Cortex(tm)-A15 Technical

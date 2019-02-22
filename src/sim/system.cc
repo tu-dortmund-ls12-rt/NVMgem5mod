@@ -291,8 +291,7 @@ System::numRunningContexts()
         threadContexts.cbegin(),
         threadContexts.cend(),
         [] (ThreadContext* tc) {
-            return ((tc->status() != ThreadContext::Halted) &&
-                    (tc->status() != ThreadContext::Halting));
+            return tc->status() != ThreadContext::Halted;
         }
     );
 }

@@ -96,10 +96,10 @@ Gicv3CPUInterface::getHCREL2IMO()
     }
 }
 
-RegVal
+ArmISA::MiscReg
 Gicv3CPUInterface::readMiscReg(int misc_reg)
 {
-    RegVal value = isa->readMiscRegNoEffect(misc_reg);
+    ArmISA::MiscReg value = isa->readMiscRegNoEffect(misc_reg);
     bool hcr_fmo = getHCREL2FMO();
     bool hcr_imo = getHCREL2IMO();
 
@@ -235,7 +235,7 @@ Gicv3CPUInterface::readMiscReg(int misc_reg)
           int lr_idx = getHPPVILR();
 
           if (lr_idx >= 0) {
-              RegVal lr =
+              ArmISA::MiscReg lr =
                   isa->readMiscRegNoEffect(MISCREG_ICH_LR0_EL2 + lr_idx);
               Gicv3::GroupId group =
                   lr & ICH_LR_EL2_GROUP ? Gicv3::G1NS : Gicv3::G0S;
@@ -263,7 +263,7 @@ Gicv3CPUInterface::readMiscReg(int misc_reg)
           int lr_idx = getHPPVILR();
 
           if (lr_idx >= 0) {
-              RegVal lr =
+              ArmISA::MiscReg lr =
                   isa->readMiscRegNoEffect(MISCREG_ICH_LR0_EL2 + lr_idx);
               Gicv3::GroupId group =
                   lr & ICH_LR_EL2_GROUP ? Gicv3::G1NS : Gicv3::G0S;
@@ -340,7 +340,7 @@ Gicv3CPUInterface::readMiscReg(int misc_reg)
       case MISCREG_ICV_BPR1_EL1: {
           Gicv3::GroupId group =
               misc_reg == MISCREG_ICV_BPR0_EL1 ? Gicv3::G0S : Gicv3::G1NS;
-          RegVal ich_vmcr_el2 =
+          ArmISA::MiscReg ich_vmcr_el2 =
               isa->readMiscRegNoEffect(MISCREG_ICH_VMCR_EL2);
           bool sat_inc = false;
 
@@ -420,7 +420,7 @@ Gicv3CPUInterface::readMiscReg(int misc_reg)
           uint32_t int_id = Gicv3::INTID_SPURIOUS;
 
           if (lr_idx >= 0) {
-              RegVal lr =
+              ArmISA::MiscReg lr =
                   isa->readMiscRegNoEffect(MISCREG_ICH_LR0_EL2 + lr_idx);
 
               if (!(lr & ICH_LR_EL2_GROUP) && hppviCanPreempt(lr_idx)) {
@@ -460,14 +460,6 @@ Gicv3CPUInterface::readMiscReg(int misc_reg)
               if (int_id < Gicv3::INTID_SECURE) {
                   activateIRQ(int_id, hppi.group);
               }
-
-              // LPIs are not activated and when acked their pending
-              // bit is cleared
-              if (int_id >= Gicv3Redistributor::SMALLEST_LPI_ID)
-              {
-                  redistributor->setClrLPI(int_id, false);
-              }
-
           } else {
               int_id = Gicv3::INTID_SPURIOUS;
           }
@@ -481,7 +473,7 @@ Gicv3CPUInterface::readMiscReg(int misc_reg)
           uint32_t int_id = Gicv3::INTID_SPURIOUS;
 
           if (lr_idx >= 0) {
-              RegVal lr =
+              ArmISA::MiscReg lr =
                   isa->readMiscRegNoEffect(MISCREG_ICH_LR0_EL2 + lr_idx);
 
               if (lr & ICH_LR_EL2_GROUP && hppviCanPreempt(lr_idx)) {
@@ -514,21 +506,21 @@ Gicv3CPUInterface::readMiscReg(int misc_reg)
           if (haveEL(EL3) && !distributor->DS) {
               // DIB is RO alias of ICC_SRE_EL3.DIB
               // DFB is RO alias of ICC_SRE_EL3.DFB
-              RegVal icc_sre_el3 =
+              ArmISA::MiscReg icc_sre_el3 =
                   isa->readMiscRegNoEffect(MISCREG_ICC_SRE_EL3);
               dfb = icc_sre_el3 & ICC_SRE_EL3_DFB;
               dib = icc_sre_el3 & ICC_SRE_EL3_DIB;
           } else if (haveEL(EL3) && distributor->DS) {
               // DIB is RW alias of ICC_SRE_EL3.DIB
               // DFB is RW alias of ICC_SRE_EL3.DFB
-              RegVal icc_sre_el3 =
+              ArmISA::MiscReg icc_sre_el3 =
                   isa->readMiscRegNoEffect(MISCREG_ICC_SRE_EL3);
               dfb = icc_sre_el3 & ICC_SRE_EL3_DFB;
               dib = icc_sre_el3 & ICC_SRE_EL3_DIB;
           } else if ((!haveEL(EL3) || distributor->DS) and haveEL(EL2)) {
               // DIB is RO alias of ICC_SRE_EL2.DIB
               // DFB is RO alias of ICC_SRE_EL2.DFB
-              RegVal icc_sre_el2 =
+              ArmISA::MiscReg icc_sre_el2 =
                   isa->readMiscRegNoEffect(MISCREG_ICC_SRE_EL2);
               dfb = icc_sre_el2 & ICC_SRE_EL2_DFB;
               dib = icc_sre_el2 & ICC_SRE_EL2_DIB;
@@ -596,7 +588,7 @@ Gicv3CPUInterface::readMiscReg(int misc_reg)
       case MISCREG_ICV_CTLR_EL1: {
           value = ICC_CTLR_EL1_A3V | (1 << ICC_CTLR_EL1_IDBITS_SHIFT) |
               (7 << ICC_CTLR_EL1_PRIBITS_SHIFT);
-          RegVal ich_vmcr_el2 =
+          ArmISA::MiscReg ich_vmcr_el2 =
               isa->readMiscRegNoEffect(MISCREG_ICH_VMCR_EL2);
 
           if (ich_vmcr_el2 & ICH_VMCR_EL2_VEOIM) {
@@ -620,9 +612,9 @@ Gicv3CPUInterface::readMiscReg(int misc_reg)
           value |= ICC_CTLR_EL3_RSS | ICC_CTLR_EL3_A3V | (0 << 11) |
               ((PRIORITY_BITS - 1) << 8);
           // Aliased bits...
-          RegVal icc_ctlr_el1_ns =
+          ArmISA::MiscReg icc_ctlr_el1_ns =
               isa->readMiscRegNoEffect(MISCREG_ICC_CTLR_EL1_NS);
-          RegVal icc_ctlr_el1_s =
+          ArmISA::MiscReg icc_ctlr_el1_s =
               isa->readMiscRegNoEffect(MISCREG_ICC_CTLR_EL1_S);
 
           if (icc_ctlr_el1_ns & ICC_CTLR_EL1_EOIMODE) {
@@ -661,9 +653,9 @@ Gicv3CPUInterface::readMiscReg(int misc_reg)
           value = 0;
           // Scan list registers and fill in the U, NP and EOI bits
           eoiMaintenanceInterruptStatus((uint32_t *) &value);
-          RegVal ich_hcr_el2 =
+          ArmISA::MiscReg ich_hcr_el2 =
               isa->readMiscRegNoEffect(MISCREG_ICH_HCR_EL2);
-          RegVal ich_vmcr_el2 =
+          ArmISA::MiscReg ich_vmcr_el2 =
               isa->readMiscRegNoEffect(MISCREG_ICH_VMCR_EL2);
 
           if (ich_hcr_el2 &
@@ -731,7 +723,7 @@ Gicv3CPUInterface::readMiscReg(int misc_reg)
         value = 0;
 
         for (int lr_idx = 0; lr_idx < VIRTUAL_NUM_LIST_REGS; lr_idx++) {
-            RegVal lr =
+            ArmISA::MiscReg lr =
                 isa->readMiscRegNoEffect(MISCREG_ICH_LR0_EL2 + lr_idx);
 
             if ((lr & ICH_LR_EL2_STATE_MASK) == 0 &&
@@ -772,7 +764,7 @@ Gicv3CPUInterface::readMiscReg(int misc_reg)
 }
 
 void
-Gicv3CPUInterface::setMiscReg(int misc_reg, RegVal val)
+Gicv3CPUInterface::setMiscReg(int misc_reg, ArmISA::MiscReg val)
 {
     bool do_virtual_update = false;
     DPRINTF(GIC, "Gicv3CPUInterface::setMiscReg(): "
@@ -872,7 +864,7 @@ Gicv3CPUInterface::setMiscReg(int misc_reg, RegVal val)
               // No LR found matching
               virtualIncrementEOICount();
           } else {
-              RegVal lr =
+              ArmISA::MiscReg lr =
                   isa->readMiscRegNoEffect(MISCREG_ICH_LR0_EL2 + lr_idx);
               Gicv3::GroupId lr_group =
                   lr & ICH_LR_EL2_GROUP ? Gicv3::G1NS : Gicv3::G0S;
@@ -949,7 +941,7 @@ Gicv3CPUInterface::setMiscReg(int misc_reg, RegVal val)
               // No LR found matching
               virtualIncrementEOICount();
           } else {
-              RegVal lr =
+              ArmISA::MiscReg lr =
                   isa->readMiscRegNoEffect(MISCREG_ICH_LR0_EL2 + lr_idx);
               Gicv3::GroupId lr_group =
                   lr & ICH_LR_EL2_GROUP ? Gicv3::G1NS : Gicv3::G0S;
@@ -1123,7 +1115,7 @@ Gicv3CPUInterface::setMiscReg(int misc_reg, RegVal val)
       case MISCREG_ICV_BPR1_EL1: {
           Gicv3::GroupId group =
               misc_reg == MISCREG_ICV_BPR0_EL1 ? Gicv3::G0S : Gicv3::G1NS;
-          RegVal ich_vmcr_el2 =
+          ArmISA::MiscReg ich_vmcr_el2 =
               isa->readMiscRegNoEffect(MISCREG_ICH_VMCR_EL2);
 
           if (group == Gicv3::G1NS && (ich_vmcr_el2 & ICH_VMCR_EL2_VCBPR)) {
@@ -1184,7 +1176,7 @@ Gicv3CPUInterface::setMiscReg(int misc_reg, RegVal val)
               mask = ICC_CTLR_EL1_CBPR | ICC_CTLR_EL1_EOIMODE;
           }
 
-          RegVal old_val =
+          ArmISA::MiscReg old_val =
               isa->readMiscRegNoEffect(MISCREG_ICC_CTLR_EL1);
           old_val &= ~mask;
           val = old_val | (val & mask);
@@ -1192,7 +1184,7 @@ Gicv3CPUInterface::setMiscReg(int misc_reg, RegVal val)
       }
 
       case MISCREG_ICV_CTLR_EL1: {
-          RegVal ich_vmcr_el2 =
+          ArmISA::MiscReg ich_vmcr_el2 =
               isa->readMiscRegNoEffect(MISCREG_ICH_VMCR_EL2);
           ich_vmcr_el2 = insertBits(ich_vmcr_el2, ICH_VMCR_EL2_VCBPR_SHIFT,
                   val & ICC_CTLR_EL1_CBPR ? 1 : 0);
@@ -1205,9 +1197,9 @@ Gicv3CPUInterface::setMiscReg(int misc_reg, RegVal val)
 
       case MISCREG_ICC_MCTLR:
       case MISCREG_ICC_CTLR_EL3: {
-          RegVal icc_ctlr_el1_s =
+          ArmISA::MiscReg icc_ctlr_el1_s =
               isa->readMiscRegNoEffect(MISCREG_ICC_CTLR_EL1_S);
-          RegVal icc_ctlr_el1_ns =
+          ArmISA::MiscReg icc_ctlr_el1_ns =
               isa->readMiscRegNoEffect(MISCREG_ICC_CTLR_EL1_NS);
 
           // ICC_CTLR_EL1(NS).EOImode is an alias of
@@ -1242,7 +1234,7 @@ Gicv3CPUInterface::setMiscReg(int misc_reg, RegVal val)
           isa->setMiscRegNoEffect(MISCREG_ICC_CTLR_EL1_S, icc_ctlr_el1_s);
           isa->setMiscRegNoEffect(MISCREG_ICC_CTLR_EL1_NS, icc_ctlr_el1_ns);
           // Only ICC_CTLR_EL3_EOIMODE_EL3 is writable
-          RegVal old_icc_ctlr_el3 =
+          ArmISA::MiscReg old_icc_ctlr_el3 =
               isa->readMiscRegNoEffect(MISCREG_ICC_CTLR_EL3);
           old_icc_ctlr_el3 &= ~(ICC_CTLR_EL3_EOIMODE_EL3 | ICC_CTLR_EL3_RM);
           val = old_icc_ctlr_el3 |
@@ -1265,7 +1257,7 @@ Gicv3CPUInterface::setMiscReg(int misc_reg, RegVal val)
                * NS access and Group 0 is inaccessible to NS: return the
                * NS view of the current priority
                */
-              RegVal old_icc_pmr_el1 =
+              ArmISA::MiscReg old_icc_pmr_el1 =
                   isa->readMiscRegNoEffect(MISCREG_ICC_PMR_EL1);
 
               if (!(old_icc_pmr_el1 & 0x80)) {
@@ -1292,7 +1284,7 @@ Gicv3CPUInterface::setMiscReg(int misc_reg, RegVal val)
 
       case MISCREG_ICV_IGRPEN0_EL1: {
           bool enable = val & 0x1;
-          RegVal ich_vmcr_el2 =
+          ArmISA::MiscReg ich_vmcr_el2 =
               isa->readMiscRegNoEffect(MISCREG_ICH_VMCR_EL2);
           ich_vmcr_el2 = insertBits(ich_vmcr_el2,
                   ICH_VMCR_EL2_VENG0_SHIFT, enable);
@@ -1312,7 +1304,7 @@ Gicv3CPUInterface::setMiscReg(int misc_reg, RegVal val)
 
       case MISCREG_ICV_IGRPEN1_EL1: {
           bool enable = val & 0x1;
-          RegVal ich_vmcr_el2 =
+          ArmISA::MiscReg ich_vmcr_el2 =
               isa->readMiscRegNoEffect(MISCREG_ICH_VMCR_EL2);
           ich_vmcr_el2 = insertBits(ich_vmcr_el2,
                   ICH_VMCR_EL2_VENG1_SHIFT, enable);
@@ -1415,7 +1407,7 @@ Gicv3CPUInterface::setMiscReg(int misc_reg, RegVal val)
           } else if (haveEL(EL3) && distributor->DS) {
               // DIB is RW alias of ICC_SRE_EL3.DIB
               // DFB is RW alias of ICC_SRE_EL3.DFB
-              RegVal icc_sre_el3 =
+              ArmISA::MiscReg icc_sre_el3 =
                   isa->readMiscRegNoEffect(MISCREG_ICC_SRE_EL3);
               icc_sre_el3 = insertBits(icc_sre_el3, ICC_SRE_EL3_DFB, dfb);
               icc_sre_el3 = insertBits(icc_sre_el3, ICC_SRE_EL3_DIB, dib);
@@ -1459,7 +1451,7 @@ Gicv3CPUInterface::setMiscReg(int misc_reg, RegVal val)
             // Enforce RES0 bits in priority field, 5 of 8 bits used
             val = insertBits(val, ICH_LRC_PRIORITY_SHIFT + 2,
                     ICH_LRC_PRIORITY_SHIFT, 0);
-            RegVal old_val = isa->readMiscRegNoEffect(misc_reg);
+            ArmISA::MiscReg old_val = isa->readMiscRegNoEffect(misc_reg);
             val = (old_val & 0xffffffff) | (val << 32);
             do_virtual_update = true;
             break;
@@ -1467,7 +1459,7 @@ Gicv3CPUInterface::setMiscReg(int misc_reg, RegVal val)
 
       case MISCREG_ICH_LR0 ... MISCREG_ICH_LR15: {
           // AArch32 (maps to AArch64 MISCREG_ICH_LR<n>_EL2 low half part)
-          RegVal old_val = isa->readMiscRegNoEffect(misc_reg);
+          ArmISA::MiscReg old_val = isa->readMiscRegNoEffect(misc_reg);
           val = (old_val & 0xffffffff00000000) | (val & 0xffffffff);
           do_virtual_update = true;
           break;
@@ -1525,7 +1517,7 @@ int
 Gicv3CPUInterface::virtualFindActive(uint32_t int_id)
 {
     for (uint32_t lr_idx = 0; lr_idx < VIRTUAL_NUM_LIST_REGS; lr_idx++) {
-        RegVal lr =
+        ArmISA::MiscReg lr =
             isa->readMiscRegNoEffect(MISCREG_ICH_LR0_EL2 + lr_idx);
         uint32_t lr_intid = bits(lr, 31, 0);
 
@@ -1605,7 +1597,7 @@ void
 Gicv3CPUInterface::dropPriority(Gicv3::GroupId group)
 {
     int apr_misc_reg;
-    RegVal apr;
+    ArmISA::MiscReg apr;
     apr_misc_reg = group == Gicv3::G0S ?
                    MISCREG_ICC_AP0R0_EL1 : MISCREG_ICC_AP1R0_EL1;
     apr = isa->readMiscRegNoEffect(apr_misc_reg);
@@ -1633,8 +1625,10 @@ Gicv3CPUInterface::virtualDropPriority()
     int apr_max = 1 << (VIRTUAL_PREEMPTION_BITS - 5);
 
     for (int i = 0; i < apr_max; i++) {
-        RegVal vapr0 = isa->readMiscRegNoEffect(MISCREG_ICH_AP0R0_EL2 + i);
-        RegVal vapr1 = isa->readMiscRegNoEffect(MISCREG_ICH_AP1R0_EL2 + i);
+        ArmISA::MiscReg vapr0 =
+            isa->readMiscRegNoEffect(MISCREG_ICH_AP0R0_EL2 + i);
+        ArmISA::MiscReg vapr1 =
+            isa->readMiscRegNoEffect(MISCREG_ICH_AP1R0_EL2 + i);
 
         if (!vapr0 && !vapr1) {
             continue;
@@ -1668,7 +1662,7 @@ Gicv3CPUInterface::activateIRQ(uint32_t int_id, Gicv3::GroupId group)
     int reg_bit = apr_bit % 32;
     int apr_idx = group == Gicv3::G0S ?
                  MISCREG_ICC_AP0R0_EL1 : MISCREG_ICC_AP1R0_EL1;
-    RegVal apr = isa->readMiscRegNoEffect(apr_idx);
+    ArmISA::MiscReg apr = isa->readMiscRegNoEffect(apr_idx);
     apr |= (1 << reg_bit);
     isa->setMiscRegNoEffect(apr_idx, apr);
 
@@ -1688,7 +1682,7 @@ void
 Gicv3CPUInterface::virtualActivateIRQ(uint32_t lr_idx)
 {
     // Update active priority registers.
-    RegVal lr = isa->readMiscRegNoEffect(MISCREG_ICH_LR0_EL2 +
+    ArmISA::MiscReg lr = isa->readMiscRegNoEffect(MISCREG_ICH_LR0_EL2 +
             lr_idx);
     Gicv3::GroupId group = lr & ICH_LR_EL2_GROUP ? Gicv3::G1NS : Gicv3::G0S;
     uint8_t prio = bits(lr, 55, 48) & 0xf8;
@@ -1697,7 +1691,7 @@ Gicv3CPUInterface::virtualActivateIRQ(uint32_t lr_idx)
     int reg_bit = apr_bit % 32;
     int apr_idx = group == Gicv3::G0S ?
         MISCREG_ICH_AP0R0_EL2 + reg_no : MISCREG_ICH_AP1R0_EL2 + reg_no;
-    RegVal apr = isa->readMiscRegNoEffect(apr_idx);
+    ArmISA::MiscReg apr = isa->readMiscRegNoEffect(apr_idx);
     apr |= (1 << reg_bit);
     isa->setMiscRegNoEffect(apr_idx, apr);
     // Move interrupt state from pending to active.
@@ -1725,7 +1719,7 @@ Gicv3CPUInterface::deactivateIRQ(uint32_t int_id, Gicv3::GroupId group)
 void
 Gicv3CPUInterface::virtualDeactivateIRQ(int lr_idx)
 {
-    RegVal lr = isa->readMiscRegNoEffect(MISCREG_ICH_LR0_EL2 +
+    ArmISA::MiscReg lr = isa->readMiscRegNoEffect(MISCREG_ICH_LR0_EL2 +
             lr_idx);
 
     if (lr & ICH_LR_EL2_HW) {
@@ -1796,7 +1790,7 @@ Gicv3CPUInterface::groupPriorityMask(Gicv3::GroupId group)
 uint32_t
 Gicv3CPUInterface::virtualGroupPriorityMask(Gicv3::GroupId group)
 {
-    RegVal ich_vmcr_el2 =
+    ArmISA::MiscReg ich_vmcr_el2 =
         isa->readMiscRegNoEffect(MISCREG_ICH_VMCR_EL2);
 
     if (group == Gicv3::G1NS && (ich_vmcr_el2 & ICH_VMCR_EL2_VCBPR)) {
@@ -1834,7 +1828,8 @@ Gicv3CPUInterface::isEOISplitMode()
 bool
 Gicv3CPUInterface::virtualIsEOISplitMode()
 {
-    RegVal ich_vmcr_el2 = isa->readMiscRegNoEffect(MISCREG_ICH_VMCR_EL2);
+    ArmISA::MiscReg ich_vmcr_el2 =
+        isa->readMiscRegNoEffect(MISCREG_ICH_VMCR_EL2);
     return ich_vmcr_el2 & ICH_VMCR_EL2_VEOIM;
 }
 
@@ -1902,7 +1897,7 @@ Gicv3CPUInterface::virtualUpdate()
     int lr_idx = getHPPVILR();
 
     if (lr_idx >= 0) {
-        RegVal ich_lr_el2 =
+        ArmISA::MiscReg ich_lr_el2 =
             isa->readMiscRegNoEffect(MISCREG_ICH_LR0_EL2 + lr_idx);
 
         if (hppviCanPreempt(lr_idx)) {
@@ -1914,7 +1909,8 @@ Gicv3CPUInterface::virtualUpdate()
         }
     }
 
-    RegVal ich_hcr_el2 = isa->readMiscRegNoEffect(MISCREG_ICH_HCR_EL2);
+    ArmISA::MiscReg ich_hcr_el2 =
+        isa->readMiscRegNoEffect(MISCREG_ICH_HCR_EL2);
 
     if (ich_hcr_el2 & ICH_HCR_EL2_EN) {
         if (maintenanceInterruptStatus()) {
@@ -1944,7 +1940,8 @@ int
 Gicv3CPUInterface::getHPPVILR()
 {
     int idx = -1;
-    RegVal ich_vmcr_el2 = isa->readMiscRegNoEffect(MISCREG_ICH_VMCR_EL2);
+    ArmISA::MiscReg ich_vmcr_el2 =
+        isa->readMiscRegNoEffect(MISCREG_ICH_VMCR_EL2);
 
     if (!(ich_vmcr_el2 & (ICH_VMCR_EL2_VENG0 | ICH_VMCR_EL2_VENG1))) {
         // VG0 and VG1 disabled...
@@ -1954,7 +1951,7 @@ Gicv3CPUInterface::getHPPVILR()
     uint8_t highest_prio = 0xff;
 
     for (int i = 0; i < 16; i++) {
-        RegVal ich_lri_el2 =
+        ArmISA::MiscReg ich_lri_el2 =
             isa->readMiscRegNoEffect(MISCREG_ICH_LR0_EL2 + i);
         uint8_t state = bits(ich_lri_el2, 63, 62);
 
@@ -1988,7 +1985,8 @@ Gicv3CPUInterface::getHPPVILR()
 bool
 Gicv3CPUInterface::hppviCanPreempt(int lr_idx)
 {
-    RegVal lr = isa->readMiscRegNoEffect(MISCREG_ICH_LR0_EL2 + lr_idx);
+    ArmISA::MiscReg lr = isa->readMiscRegNoEffect(MISCREG_ICH_LR0_EL2 +
+            lr_idx);
 
     if (!(isa->readMiscRegNoEffect(MISCREG_ICH_HCR_EL2) & ICH_HCR_EL2_EN)) {
         // virtual interface is disabled
@@ -2026,7 +2024,7 @@ Gicv3CPUInterface::virtualHighestActivePriority()
     uint8_t num_aprs = 1 << (VIRTUAL_PRIORITY_BITS - 5);
 
     for (int i = 0; i < num_aprs; i++) {
-        RegVal vapr =
+        ArmISA::MiscReg vapr =
             isa->readMiscRegNoEffect(MISCREG_ICH_AP0R0_EL2 + i) |
             isa->readMiscRegNoEffect(MISCREG_ICH_AP1R0_EL2 + i);
 
@@ -2045,7 +2043,8 @@ void
 Gicv3CPUInterface::virtualIncrementEOICount()
 {
     // Increment the EOICOUNT field in ICH_HCR_EL2
-    RegVal ich_hcr_el2 = isa->readMiscRegNoEffect(MISCREG_ICH_HCR_EL2);
+    ArmISA::MiscReg ich_hcr_el2 =
+        isa->readMiscRegNoEffect(MISCREG_ICH_HCR_EL2);
     uint32_t EOI_cout = bits(ich_hcr_el2, 31, 27);
     EOI_cout++;
     ich_hcr_el2 = insertBits(ich_hcr_el2, 31, 27, EOI_cout);
@@ -2267,7 +2266,8 @@ Gicv3CPUInterface::eoiMaintenanceInterruptStatus(uint32_t * misr)
     bool seen_pending = false;
 
     for (int lr_idx = 0; lr_idx < VIRTUAL_NUM_LIST_REGS; lr_idx++) {
-        RegVal lr = isa->readMiscRegNoEffect(MISCREG_ICH_LR0_EL2 + lr_idx);
+        ArmISA::MiscReg lr =
+            isa->readMiscRegNoEffect(MISCREG_ICH_LR0_EL2 + lr_idx);
 
         if ((lr & (ICH_LR_EL2_STATE_MASK | ICH_LR_EL2_HW | ICH_LR_EL2_EOI)) ==
                 ICH_LR_EL2_EOI) {
@@ -2285,7 +2285,7 @@ Gicv3CPUInterface::eoiMaintenanceInterruptStatus(uint32_t * misr)
     }
 
     if (misr) {
-        RegVal ich_hcr_el2 =
+        ArmISA::MiscReg ich_hcr_el2 =
             isa->readMiscRegNoEffect(MISCREG_ICH_HCR_EL2);
 
         if (valid_count < 2 && (ich_hcr_el2 & ICH_HCR_EL2_UIE)) {
@@ -2313,8 +2313,10 @@ Gicv3CPUInterface::maintenanceInterruptStatus()
     uint32_t value = 0;
     /* Scan list registers and fill in the U, NP and EOI bits */
     eoiMaintenanceInterruptStatus(&value);
-    RegVal ich_hcr_el2 = isa->readMiscRegNoEffect(MISCREG_ICH_HCR_EL2);
-    RegVal ich_vmcr_el2 = isa->readMiscRegNoEffect(MISCREG_ICH_VMCR_EL2);
+    ArmISA::MiscReg ich_hcr_el2 =
+        isa->readMiscRegNoEffect(MISCREG_ICH_HCR_EL2);
+    ArmISA::MiscReg ich_vmcr_el2 =
+        isa->readMiscRegNoEffect(MISCREG_ICH_VMCR_EL2);
 
     if (ich_hcr_el2 & (ICH_HCR_EL2_LRENPIE | ICH_HCR_EL2_EOICOUNT_MASK)) {
         value |= ICH_MISR_EL2_LRENP;

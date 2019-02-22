@@ -266,8 +266,7 @@ TournamentBP::uncondBranch(ThreadID tid, Addr pc, void * &bp_history)
 
 void
 TournamentBP::update(ThreadID tid, Addr branch_addr, bool taken,
-                     void *bp_history, bool squashed,
-                     const StaticInstPtr & inst, Addr corrTarget)
+                     void *bp_history, bool squashed)
 {
     assert(bp_history);
 
@@ -364,6 +363,12 @@ TournamentBP*
 TournamentBPParams::create()
 {
     return new TournamentBP(this);
+}
+
+unsigned
+TournamentBP::getGHR(ThreadID tid, void *bp_history) const
+{
+    return static_cast<BPHistory *>(bp_history)->globalHistory;
 }
 
 #ifdef DEBUG

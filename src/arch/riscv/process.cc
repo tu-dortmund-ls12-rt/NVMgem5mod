@@ -67,11 +67,6 @@ RiscvProcess::RiscvProcess(ProcessParams *params, ObjectFile *objFile) :
                 objFile)
 {
     fatal_if(params->useArchPT, "Arch page tables not implemented.");
-}
-
-RiscvProcess64::RiscvProcess64(ProcessParams *params, ObjectFile *objFile) :
-        RiscvProcess(params, objFile)
-{
     const Addr stack_base = 0x7FFFFFFFFFFFFFFFL;
     const Addr max_stack_size = 8 * 1024 * 1024;
     const Addr next_thread_stack_base = stack_base - max_stack_size;
@@ -82,21 +77,8 @@ RiscvProcess64::RiscvProcess64(ProcessParams *params, ObjectFile *objFile) :
             next_thread_stack_base, mmap_end);
 }
 
-RiscvProcess32::RiscvProcess32(ProcessParams *params, ObjectFile *objFile) :
-        RiscvProcess(params, objFile)
-{
-    const Addr stack_base = 0x7FFFFFFF;
-    const Addr max_stack_size = 8 * 1024 * 1024;
-    const Addr next_thread_stack_base = stack_base - max_stack_size;
-    const Addr brk_point = roundUp(objFile->bssBase() + objFile->bssSize(),
-            PageBytes);
-    const Addr mmap_end = 0x40000000L;
-    memState = make_shared<MemState>(brk_point, stack_base, max_stack_size,
-                                     next_thread_stack_base, mmap_end);
-}
-
 void
-RiscvProcess64::initState()
+RiscvProcess::initState()
 {
     Process::initState();
 
@@ -105,25 +87,10 @@ RiscvProcess64::initState()
         system->getThreadContext(ctx)->setMiscRegNoEffect(MISCREG_PRV, PRV_U);
 }
 
-void
-RiscvProcess32::initState()
-{
-    Process::initState();
-
-    argsInit<uint32_t>(PageBytes);
-    for (ContextID ctx: contextIds) {
-        system->getThreadContext(ctx)->setMiscRegNoEffect(MISCREG_PRV, PRV_U);
-        PCState pc = system->getThreadContext(ctx)->pcState();
-        pc.rv32(true);
-        system->getThreadContext(ctx)->pcState(pc);
-    }
-}
-
 template<class IntType> void
 RiscvProcess::argsInit(int pageSize)
 {
     const int RandomBytes = 16;
-    const int addrSize = sizeof(IntType);
 
     updateBias();
     objFile->loadSections(initVirtMem);
@@ -137,24 +104,23 @@ RiscvProcess::argsInit(int pageSize)
         stack_top -= arg.size() + 1;
     for (const string& env: envp)
         stack_top -= env.size() + 1;
-    stack_top &= -addrSize;
+    stack_top &= -sizeof(Addr);
 
-    typedef AuxVector<IntType> auxv_t;
-    vector<auxv_t> auxv;
+    vector<AuxVector<IntType>> auxv;
     if (elfObject != nullptr) {
-        auxv.push_back(auxv_t(M5_AT_ENTRY, objFile->entryPoint()));
-        auxv.push_back(auxv_t(M5_AT_PHNUM, elfObject->programHeaderCount()));
-        auxv.push_back(auxv_t(M5_AT_PHENT, elfObject->programHeaderSize()));
-        auxv.push_back(auxv_t(M5_AT_PHDR, elfObject->programHeaderTable()));
-        auxv.push_back(auxv_t(M5_AT_PAGESZ, PageBytes));
-        auxv.push_back(auxv_t(M5_AT_SECURE, 0));
-        auxv.push_back(auxv_t(M5_AT_RANDOM, stack_top));
-        auxv.push_back(auxv_t(M5_AT_NULL, 0));
+        auxv.push_back({M5_AT_ENTRY, objFile->entryPoint()});
+        auxv.push_back({M5_AT_PHNUM, elfObject->programHeaderCount()});
+        auxv.push_back({M5_AT_PHENT, elfObject->programHeaderSize()});
+        auxv.push_back({M5_AT_PHDR, elfObject->programHeaderTable()});
+        auxv.push_back({M5_AT_PAGESZ, PageBytes});
+        auxv.push_back({M5_AT_SECURE, 0});
+        auxv.push_back({M5_AT_RANDOM, stack_top});
+        auxv.push_back({M5_AT_NULL, 0});
     }
-    stack_top -= (1 + argv.size()) * addrSize +
-                   (1 + envp.size()) * addrSize +
-                   addrSize + 2 * sizeof(IntType) * auxv.size();
-    stack_top &= -2*addrSize;
+    stack_top -= (1 + argv.size()) * sizeof(Addr) +
+                   (1 + envp.size()) * sizeof(Addr) +
+                   sizeof(Addr) + 2 * sizeof(IntType) * auxv.size();
+    stack_top &= -2*sizeof(Addr);
     memState->setStackSize(memState->getStackBase() - stack_top);
     allocateMem(roundDown(stack_top, pageSize),
             roundUp(memState->getStackSize(), pageSize));
@@ -193,14 +159,14 @@ RiscvProcess::argsInit(int pageSize)
     envPointers.push_back(0);
 
     // Align stack
-    memState->setStackMin(memState->getStackMin() & -addrSize);
+    memState->setStackMin(memState->getStackMin() & -sizeof(Addr));
 
     // Calculate bottom of stack
     memState->setStackMin(memState->getStackMin() -
-            ((1 + argv.size()) * addrSize +
-             (1 + envp.size()) * addrSize +
-             addrSize + 2 * sizeof(IntType) * auxv.size()));
-    memState->setStackMin(memState->getStackMin() & -2*addrSize);
+            ((1 + argv.size()) * sizeof(Addr) +
+             (1 + envp.size()) * sizeof(Addr) +
+             sizeof(Addr) + 2 * sizeof(IntType) * auxv.size()));
+    memState->setStackMin(memState->getStackMin() & -2*sizeof(Addr));
     Addr sp = memState->getStackMin();
     const auto pushOntoStack =
         [this, &sp](const uint8_t* data, const size_t size) {
@@ -216,14 +182,14 @@ RiscvProcess::argsInit(int pageSize)
     for (const Addr& argPointer: argPointers) {
         DPRINTF(Stack, "Wrote argv pointer %p to address %p\n",
                 (void*)argPointer, (void*)sp);
-        pushOntoStack((uint8_t*)&argPointer, addrSize);
+        pushOntoStack((uint8_t*)&argPointer, sizeof(Addr));
     }
 
     // Push env pointers onto stack
     for (const Addr& envPointer: envPointers) {
         DPRINTF(Stack, "Wrote envp pointer %p to address %p\n",
                 (void*)envPointer, (void*)sp);
-        pushOntoStack((uint8_t*)&envPointer, addrSize);
+        pushOntoStack((uint8_t*)&envPointer, sizeof(Addr));
     }
 
     // Push aux vector onto stack
@@ -253,12 +219,12 @@ RiscvProcess::argsInit(int pageSize)
     memState->setStackMin(roundDown(memState->getStackMin(), pageSize));
 }
 
-RegVal
+RiscvISA::IntReg
 RiscvProcess::getSyscallArg(ThreadContext *tc, int &i)
 {
     // If a larger index is requested than there are syscall argument
     // registers, return 0
-    RegVal retval = 0;
+    RiscvISA::IntReg retval = 0;
     if (i < SyscallArgumentRegs.size())
         retval = tc->readIntReg(SyscallArgumentRegs[i]);
     i++;
@@ -266,7 +232,7 @@ RiscvProcess::getSyscallArg(ThreadContext *tc, int &i)
 }
 
 void
-RiscvProcess::setSyscallArg(ThreadContext *tc, int i, RegVal val)
+RiscvProcess::setSyscallArg(ThreadContext *tc, int i, RiscvISA::IntReg val)
 {
     tc->setIntReg(SyscallArgumentRegs[i], val);
 }
@@ -279,6 +245,6 @@ RiscvProcess::setSyscallReturn(ThreadContext *tc, SyscallReturn sysret)
         tc->setIntReg(SyscallPseudoReturnReg, sysret.returnValue());
     } else {
         // got an error, return details
-        tc->setIntReg(SyscallPseudoReturnReg, sysret.encodedValue());
+        tc->setIntReg(SyscallPseudoReturnReg, sysret.errnoValue());
     }
 }

@@ -42,7 +42,7 @@
 #          Erfan Azarkhish
 
 from m5.params import *
-from m5.objects.MemObject import MemObject
+from MemObject import MemObject
 
 # SerialLink is a simple variation of the Bridge class, with the ability to
 # account for the latency of packet serialization.

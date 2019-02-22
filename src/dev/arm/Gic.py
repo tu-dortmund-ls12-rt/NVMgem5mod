@@ -37,11 +37,10 @@
 
 from m5.params import *
 from m5.proxy import *
-from m5.util.fdthelper import *
 from m5.SimObject import SimObject
 
-from m5.objects.Device import PioDevice
-from m5.objects.Platform import Platform
+from Device import PioDevice
+from Platform import Platform
 
 class BaseGic(PioDevice):
     type = 'BaseGic'

@@ -216,9 +216,6 @@ class DefaultFetch
     /** Initialize stage. */
     void startupStage();
 
-    /** Clear all thread-specific states*/
-    void clearStates(ThreadID tid);
-
     /** Handles retrying the fetch access. */
     void recvReqRetry();
 

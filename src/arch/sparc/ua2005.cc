@@ -88,7 +88,7 @@ getMiscRegName(RegIndex index)
 }
 
 void
-ISA::setFSReg(int miscReg, RegVal val, ThreadContext *tc)
+ISA::setFSReg(int miscReg, const MiscReg &val, ThreadContext *tc)
 {
     BaseCPU *cpu = tc->getCpuPtr();
 
@@ -242,7 +242,7 @@ ISA::setFSReg(int miscReg, RegVal val, ThreadContext *tc)
     }
 }
 
-RegVal
+MiscReg
 ISA::readFSReg(int miscReg, ThreadContext * tc)
 {
     uint64_t temp;

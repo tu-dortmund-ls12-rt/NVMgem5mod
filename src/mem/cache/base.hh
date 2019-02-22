@@ -1132,15 +1132,6 @@ class BaseCache : public MemObject
         return tags->findBlock(addr, is_secure);
     }
 
-    bool hasBeenPrefetched(Addr addr, bool is_secure) const {
-        CacheBlk *block = tags->findBlock(addr, is_secure);
-        if (block) {
-            return block->wasPrefetched();
-        } else {
-            return false;
-        }
-    }
-
     bool inMissQueue(Addr addr, bool is_secure) const {
         return mshrQueue.findMatch(addr, is_secure);
     }

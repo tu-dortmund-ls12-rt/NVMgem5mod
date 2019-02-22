@@ -23,7 +23,7 @@
 
 #include <cstring> // std::memset
 
-#include "gp.hh"
+#include "tlm_core/2/generic_payload/gp.hh"
 
 namespace tlm
 {

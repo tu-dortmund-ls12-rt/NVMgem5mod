@@ -20,8 +20,7 @@
 #ifndef __SYSTEMC_EXT_TLM_CORE_2_INTERFACES_DMI_HH__
 #define __SYSTEMC_EXT_TLM_CORE_2_INTERFACES_DMI_HH__
 
-#include "../../../core/sc_time.hh"
-#include "../../../dt/int/sc_nbdefs.hh"
+#include <systemc>
 
 namespace tlm
 {

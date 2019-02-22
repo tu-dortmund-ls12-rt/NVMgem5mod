@@ -41,8 +41,7 @@
 from m5.defines import buildEnv
 from m5.params import *
 from m5.proxy import *
-
-from m5.objects.Device import BasicPioDevice
+from Device import BasicPioDevice
 
 class X86LocalApic(BasicPioDevice):
     type = 'X86LocalApic'

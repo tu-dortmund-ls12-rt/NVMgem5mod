@@ -220,7 +220,7 @@ def template CSRExecute {{
         %(op_decl)s;
         %(op_rd)s;
 
-        RegVal data, olddata;
+        MiscReg data, olddata;
         switch (csr) {
           case CSR_FCSR:
             olddata = xc->readMiscReg(MISCREG_FFLAGS) |
