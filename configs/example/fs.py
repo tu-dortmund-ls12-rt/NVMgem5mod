@@ -385,6 +385,7 @@ from m5.objects import ArmSemihosting
 test_sys.semihosting = ArmSemihosting()
 test_sys.highest_el_is_64 = True
 test_sys.auto_reset_addr = True
+test_sys.write_pmu=NVMainWritePMU()
 
 for cpu in test_sys.cpu:
     for isa in cpu.isa:
@@ -395,9 +396,9 @@ for cpu in test_sys.cpu:
         cpu=cpu, dtb=cpu.dtb, itb=cpu.itb,
         icache=getattr(cpu, "il1_cache", None),
         dcache=getattr(cpu, "dl1_cache", None),
-        l2cache=getattr(cpu, "l2_cache", None)
+        l2cache=getattr(cpu, "l2_cache", None),
+        commmonitor=test_sys.write_pmu
         )
-
 
 Simulation.setWorkCountOptions(test_sys, options)
 Simulation.run(options, root, test_sys, FutureClass)

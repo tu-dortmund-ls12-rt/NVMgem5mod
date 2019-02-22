@@ -102,7 +102,7 @@ class ArmPMU(SimObject):
                       cpu=None,
                       itb=None, dtb=None,
                       icache=None, dcache=None,
-                      l2cache=None):
+                      l2cache=None, commmonitor=None):
         """Add architected events to the PMU.
 
         This method can be called multiple times with only a subset of
@@ -170,6 +170,8 @@ class ArmPMU(SimObject):
         # 0x2E: L2I_TLB_REFILL
         # 0x2F: L2D_TLB
         # 0x30: L2I_TLB
+        
+        self.addEvent(ProbeEvent(self,0x61, commmonitor, "MemBusWrites"))
 
     cycleEventId = Param.Int(ARCH_EVENT_CORE_CYCLES, "Cycle event id")
     platform = Param.Platform(Parent.any, "Platform this device is part of.")

@@ -52,40 +52,30 @@ CommMonitor::CommMonitor(Params* params)
     : MemObject(params),
       masterPort(name() + "-master", *this),
       slavePort(name() + "-slave", *this),
-      samplePeriodicEvent([this]{ samplePeriodic(); }, name()),
+      samplePeriodicEvent([this] { samplePeriodic(); }, name()),
       samplePeriodTicks(params->sample_period),
       samplePeriod(params->sample_period / SimClock::Float::s),
-      stats(params)
-{
+      stats(params) {
     DPRINTF(CommMonitor,
-            "Created monitor %s with sample period %d ticks (%f ms)\n",
-            name(), samplePeriodTicks, samplePeriod * 1E3);
+            "Created monitor %s with sample period %d ticks (%f ms)\n", name(),
+            samplePeriodTicks, samplePeriod * 1E3);
 }
 
-CommMonitor*
-CommMonitorParams::create()
-{
-    return new CommMonitor(this);
-}
+CommMonitor* CommMonitorParams::create() { return new CommMonitor(this); }
 
-void
-CommMonitor::init()
-{
+void CommMonitor::init() {
     // make sure both sides of the monitor are connected
     if (!slavePort.isConnected() || !masterPort.isConnected())
         fatal("Communication monitor is not connected on both sides.\n");
 }
 
-void
-CommMonitor::regProbePoints()
-{
+void CommMonitor::regProbePoints() {
     ppPktReq.reset(new ProbePoints::Packet(getProbeManager(), "PktRequest"));
     ppPktResp.reset(new ProbePoints::Packet(getProbeManager(), "PktResponse"));
 }
 
-BaseMasterPort&
-CommMonitor::getMasterPort(const std::string& if_name, PortID idx)
-{
+BaseMasterPort& CommMonitor::getMasterPort(const std::string& if_name,
+                                           PortID idx) {
     if (if_name == "master") {
         return masterPort;
     } else {
@@ -93,9 +83,8 @@ CommMonitor::getMasterPort(const std::string& if_name, PortID idx)
     }
 }
 
-BaseSlavePort&
-CommMonitor::getSlavePort(const std::string& if_name, PortID idx)
-{
+BaseSlavePort& CommMonitor::getSlavePort(const std::string& if_name,
+                                         PortID idx) {
     if (if_name == "slave") {
         return slavePort;
     } else {
@@ -103,31 +92,23 @@ CommMonitor::getSlavePort(const std::string& if_name, PortID idx)
     }
 }
 
-void
-CommMonitor::recvFunctional(PacketPtr pkt)
-{
+void CommMonitor::recvFunctional(PacketPtr pkt) {
     masterPort.sendFunctional(pkt);
 }
 
-void
-CommMonitor::recvFunctionalSnoop(PacketPtr pkt)
-{
+void CommMonitor::recvFunctionalSnoop(PacketPtr pkt) {
     slavePort.sendFunctionalSnoop(pkt);
 }
 
-void
-CommMonitor::MonitorStats::updateReqStats(
+void CommMonitor::MonitorStats::updateReqStats(
     const ProbePoints::PacketInfo& pkt_info, bool is_atomic,
-    bool expects_response)
-{
+    bool expects_response) {
     if (pkt_info.cmd.isRead()) {
         // Increment number of observed read transactions
-        if (!disableTransactionHists)
-            ++readTrans;
+        if (!disableTransactionHists) ++readTrans;
 
         // Get sample of burst length
-        if (!disableBurstLengthHists)
-            readBurstLengthHist.sample(pkt_info.size);
+        if (!disableBurstLengthHists) readBurstLengthHist.sample(pkt_info.size);
 
         // Sample the masked address
         if (!disableAddrDists)
@@ -140,8 +121,7 @@ CommMonitor::MonitorStats::updateReqStats(
             timeOfLastRead = curTick();
 
             // Sample value of req-req inter transaction time
-            if (timeOfLastReq != 0)
-                ittReqReq.sample(curTick() - timeOfLastReq);
+            if (timeOfLastReq != 0) ittReqReq.sample(curTick() - timeOfLastReq);
             timeOfLastReq = curTick();
         }
         if (!is_atomic && !disableOutstandingHists && expects_response)
@@ -149,8 +129,7 @@ CommMonitor::MonitorStats::updateReqStats(
 
     } else if (pkt_info.cmd.isWrite()) {
         // Same as for reads
-        if (!disableTransactionHists)
-            ++writeTrans;
+        if (!disableTransactionHists) ++writeTrans;
 
         if (!disableBurstLengthHists)
             writeBurstLengthHist.sample(pkt_info.size);
@@ -172,8 +151,7 @@ CommMonitor::MonitorStats::updateReqStats(
             timeOfLastWrite = curTick();
 
             // Sample value of req-to-req inter transaction time
-            if (timeOfLastReq != 0)
-                ittReqReq.sample(curTick() - timeOfLastReq);
+            if (timeOfLastReq != 0) ittReqReq.sample(curTick() - timeOfLastReq);
             timeOfLastReq = curTick();
         }
 
@@ -182,10 +160,8 @@ CommMonitor::MonitorStats::updateReqStats(
     }
 }
 
-void
-CommMonitor::MonitorStats::updateRespStats(
-    const ProbePoints::PacketInfo& pkt_info, Tick latency, bool is_atomic)
-{
+void CommMonitor::MonitorStats::updateRespStats(
+    const ProbePoints::PacketInfo& pkt_info, Tick latency, bool is_atomic) {
     if (pkt_info.cmd.isRead()) {
         // Decrement number of outstanding read requests
         if (!is_atomic && !disableOutstandingHists) {
@@ -193,8 +169,7 @@ CommMonitor::MonitorStats::updateRespStats(
             --outstandingReadReqs;
         }
 
-        if (!disableLatencyHists)
-            readLatencyHist.sample(latency);
+        if (!disableLatencyHists) readLatencyHist.sample(latency);
 
         // Update the bandwidth stats based on responses for reads
         if (!disableBandwidthHists) {
@@ -209,14 +184,11 @@ CommMonitor::MonitorStats::updateRespStats(
             --outstandingWriteReqs;
         }
 
-        if (!disableLatencyHists)
-            writeLatencyHist.sample(latency);
+        if (!disableLatencyHists) writeLatencyHist.sample(latency);
     }
 }
 
-Tick
-CommMonitor::recvAtomic(PacketPtr pkt)
-{
+Tick CommMonitor::recvAtomic(PacketPtr pkt) {
     const bool expects_response(pkt->needsResponse() &&
                                 !pkt->cacheResponding());
     ProbePoints::PacketInfo req_pkt_info(pkt);
@@ -225,8 +197,7 @@ CommMonitor::recvAtomic(PacketPtr pkt)
     const Tick delay(masterPort.sendAtomic(pkt));
 
     stats.updateReqStats(req_pkt_info, true, expects_response);
-    if (expects_response)
-        stats.updateRespStats(req_pkt_info, delay, true);
+    if (expects_response) stats.updateRespStats(req_pkt_info, delay, true);
 
     assert(pkt->isResponse());
     ProbePoints::PacketInfo resp_pkt_info(pkt);
@@ -234,15 +205,11 @@ CommMonitor::recvAtomic(PacketPtr pkt)
     return delay;
 }
 
-Tick
-CommMonitor::recvAtomicSnoop(PacketPtr pkt)
-{
+Tick CommMonitor::recvAtomicSnoop(PacketPtr pkt) {
     return slavePort.sendAtomicSnoop(pkt);
 }
 
-bool
-CommMonitor::recvTimingReq(PacketPtr pkt)
-{
+bool CommMonitor::recvTimingReq(PacketPtr pkt) {
     // should always see a request
     assert(pkt->isRequest());
 
@@ -274,16 +241,15 @@ CommMonitor::recvTimingReq(PacketPtr pkt)
     }
 
     if (successful) {
-        DPRINTF(CommMonitor, "Forwarded %s request\n", pkt->isRead() ? "read" :
-                pkt->isWrite() ? "write" : "non read/write");
+        DPRINTF(CommMonitor, "Forwarded %s request\n",
+                pkt->isRead() ? "read"
+                              : pkt->isWrite() ? "write" : "non read/write");
         stats.updateReqStats(pkt_info, false, expects_response);
     }
     return successful;
 }
 
-bool
-CommMonitor::recvTimingResp(PacketPtr pkt)
-{
+bool CommMonitor::recvTimingResp(PacketPtr pkt) {
     // should always see responses
     assert(pkt->isResponse());
 
@@ -323,194 +289,151 @@ CommMonitor::recvTimingResp(PacketPtr pkt)
 
     if (successful) {
         ppPktResp->notify(pkt_info);
-        DPRINTF(CommMonitor, "Received %s response\n", pkt->isRead() ? "read" :
-                pkt->isWrite() ?  "write" : "non read/write");
+        DPRINTF(CommMonitor, "Received %s response\n",
+                pkt->isRead() ? "read"
+                              : pkt->isWrite() ? "write" : "non read/write");
         stats.updateRespStats(pkt_info, latency, false);
     }
     return successful;
 }
 
-void
-CommMonitor::recvTimingSnoopReq(PacketPtr pkt)
-{
+void CommMonitor::recvTimingSnoopReq(PacketPtr pkt) {
     slavePort.sendTimingSnoopReq(pkt);
 }
 
-bool
-CommMonitor::recvTimingSnoopResp(PacketPtr pkt)
-{
+bool CommMonitor::recvTimingSnoopResp(PacketPtr pkt) {
     return masterPort.sendTimingSnoopResp(pkt);
 }
 
-void
-CommMonitor::recvRetrySnoopResp()
-{
-    slavePort.sendRetrySnoopResp();
-}
+void CommMonitor::recvRetrySnoopResp() { slavePort.sendRetrySnoopResp(); }
 
-bool
-CommMonitor::isSnooping() const
-{
+bool CommMonitor::isSnooping() const {
     // check if the connected master port is snooping
     return slavePort.isSnooping();
 }
 
-AddrRangeList
-CommMonitor::getAddrRanges() const
-{
+AddrRangeList CommMonitor::getAddrRanges() const {
     // get the address ranges of the connected slave port
     return masterPort.getAddrRanges();
 }
 
-void
-CommMonitor::recvReqRetry()
-{
-    slavePort.sendRetryReq();
-}
+void CommMonitor::recvReqRetry() { slavePort.sendRetryReq(); }
 
-void
-CommMonitor::recvRespRetry()
-{
-    masterPort.sendRetryResp();
-}
+void CommMonitor::recvRespRetry() { masterPort.sendRetryResp(); }
 
-void
-CommMonitor::recvRangeChange()
-{
-    slavePort.sendRangeChange();
-}
+void CommMonitor::recvRangeChange() { slavePort.sendRangeChange(); }
 
-void
-CommMonitor::regStats()
-{
+void CommMonitor::regStats() {
     MemObject::regStats();
 
     // Initialise all the monitor stats
     using namespace Stats;
 
-    stats.readBurstLengthHist
-        .init(params()->burst_length_bins)
+    stats.readBurstLengthHist.init(params()->burst_length_bins)
         .name(name() + ".readBurstLengthHist")
         .desc("Histogram of burst lengths of transmitted packets")
         .flags(stats.disableBurstLengthHists ? nozero : pdf);
 
-    stats.writeBurstLengthHist
-        .init(params()->burst_length_bins)
+    stats.writeBurstLengthHist.init(params()->burst_length_bins)
         .name(name() + ".writeBurstLengthHist")
         .desc("Histogram of burst lengths of transmitted packets")
         .flags(stats.disableBurstLengthHists ? nozero : pdf);
 
     // Stats based on received responses
-    stats.readBandwidthHist
-        .init(params()->bandwidth_bins)
+    stats.readBandwidthHist.init(params()->bandwidth_bins)
         .name(name() + ".readBandwidthHist")
         .desc("Histogram of read bandwidth per sample period (bytes/s)")
         .flags(stats.disableBandwidthHists ? nozero : pdf);
 
-    stats.averageReadBW
-        .name(name() + ".averageReadBandwidth")
+    stats.averageReadBW.name(name() + ".averageReadBandwidth")
         .desc("Average read bandwidth (bytes/s)")
         .flags(stats.disableBandwidthHists ? nozero : pdf);
 
-    stats.totalReadBytes
-        .name(name() + ".totalReadBytes")
+    stats.totalReadBytes.name(name() + ".totalReadBytes")
         .desc("Number of bytes read")
         .flags(stats.disableBandwidthHists ? nozero : pdf);
 
     stats.averageReadBW = stats.totalReadBytes / simSeconds;
 
     // Stats based on successfully sent requests
-    stats.writeBandwidthHist
-        .init(params()->bandwidth_bins)
+    stats.writeBandwidthHist.init(params()->bandwidth_bins)
         .name(name() + ".writeBandwidthHist")
         .desc("Histogram of write bandwidth (bytes/s)")
         .flags(stats.disableBandwidthHists ? (pdf | nozero) : pdf);
 
-    stats.averageWriteBW
-        .name(name() + ".averageWriteBandwidth")
+    stats.averageWriteBW.name(name() + ".averageWriteBandwidth")
         .desc("Average write bandwidth (bytes/s)")
         .flags(stats.disableBandwidthHists ? nozero : pdf);
 
-    stats.totalWrittenBytes
-        .name(name() + ".totalWrittenBytes")
+    stats.totalWrittenBytes.name(name() + ".totalWrittenBytes")
         .desc("Number of bytes written")
         .flags(stats.disableBandwidthHists ? nozero : pdf);
 
     stats.averageWriteBW = stats.totalWrittenBytes / simSeconds;
 
-    stats.readLatencyHist
-        .init(params()->latency_bins)
+    stats.readLatencyHist.init(params()->latency_bins)
         .name(name() + ".readLatencyHist")
         .desc("Read request-response latency")
         .flags(stats.disableLatencyHists ? nozero : pdf);
 
-    stats.writeLatencyHist
-        .init(params()->latency_bins)
+    stats.writeLatencyHist.init(params()->latency_bins)
         .name(name() + ".writeLatencyHist")
         .desc("Write request-response latency")
         .flags(stats.disableLatencyHists ? nozero : pdf);
 
     stats.ittReadRead
-        .init(1, params()->itt_max_bin, params()->itt_max_bin /
-              params()->itt_bins)
+        .init(1, params()->itt_max_bin,
+              params()->itt_max_bin / params()->itt_bins)
         .name(name() + ".ittReadRead")
         .desc("Read-to-read inter transaction time")
         .flags(stats.disableITTDists ? nozero : pdf);
 
     stats.ittWriteWrite
-        .init(1, params()->itt_max_bin, params()->itt_max_bin /
-              params()->itt_bins)
+        .init(1, params()->itt_max_bin,
+              params()->itt_max_bin / params()->itt_bins)
         .name(name() + ".ittWriteWrite")
         .desc("Write-to-write inter transaction time")
         .flags(stats.disableITTDists ? nozero : pdf);
 
     stats.ittReqReq
-        .init(1, params()->itt_max_bin, params()->itt_max_bin /
-              params()->itt_bins)
+        .init(1, params()->itt_max_bin,
+              params()->itt_max_bin / params()->itt_bins)
         .name(name() + ".ittReqReq")
         .desc("Request-to-request inter transaction time")
         .flags(stats.disableITTDists ? nozero : pdf);
 
-    stats.outstandingReadsHist
-        .init(params()->outstanding_bins)
+    stats.outstandingReadsHist.init(params()->outstanding_bins)
         .name(name() + ".outstandingReadsHist")
         .desc("Outstanding read transactions")
         .flags(stats.disableOutstandingHists ? nozero : pdf);
 
-    stats.outstandingWritesHist
-        .init(params()->outstanding_bins)
+    stats.outstandingWritesHist.init(params()->outstanding_bins)
         .name(name() + ".outstandingWritesHist")
         .desc("Outstanding write transactions")
         .flags(stats.disableOutstandingHists ? nozero : pdf);
 
-    stats.readTransHist
-        .init(params()->transaction_bins)
+    stats.readTransHist.init(params()->transaction_bins)
         .name(name() + ".readTransHist")
         .desc("Histogram of read transactions per sample period")
         .flags(stats.disableTransactionHists ? nozero : pdf);
 
-    stats.writeTransHist
-        .init(params()->transaction_bins)
+    stats.writeTransHist.init(params()->transaction_bins)
         .name(name() + ".writeTransHist")
         .desc("Histogram of write transactions per sample period")
         .flags(stats.disableTransactionHists ? nozero : pdf);
 
-    stats.readAddrDist
-        .init(0)
+    stats.readAddrDist.init(0)
         .name(name() + ".readAddrDist")
         .desc("Read address distribution")
         .flags(stats.disableAddrDists ? nozero : pdf);
 
-    stats.writeAddrDist
-        .init(0)
+    stats.writeAddrDist.init(0)
         .name(name() + ".writeAddrDist")
         .desc("Write address distribution")
         .flags(stats.disableAddrDists ? nozero : pdf);
 }
 
-void
-CommMonitor::samplePeriodic()
-{
+void CommMonitor::samplePeriodic() {
     // the periodic stats update runs on the granularity of sample
     // periods, but in combination with this there may also be a
     // external resets and dumps of the stats (through schedStatEvent)
@@ -546,8 +469,6 @@ CommMonitor::samplePeriodic()
     schedule(samplePeriodicEvent, curTick() + samplePeriodTicks);
 }
 
-void
-CommMonitor::startup()
-{
+void CommMonitor::startup() {
     schedule(samplePeriodicEvent, curTick() + samplePeriodTicks);
 }
