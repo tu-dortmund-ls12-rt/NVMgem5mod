@@ -391,7 +391,7 @@ for cpu in test_sys.cpu:
     for isa in cpu.isa:
         isa.pmu=ArmPMU()
         isa.pmu.interrupt=ArmSPI()
-        isa.pmu.interrupt.num=15
+        isa.pmu.interrupt.num=42
         isa.pmu.addArchEvents(
         cpu=cpu, dtb=cpu.dtb, itb=cpu.itb,
         icache=getattr(cpu, "il1_cache", None),
