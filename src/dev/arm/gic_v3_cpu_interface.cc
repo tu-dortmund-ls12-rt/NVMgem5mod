@@ -756,6 +756,7 @@ Gicv3CPUInterface::readMiscReg(int misc_reg)
         panic("Gicv3CPUInterface::readMiscReg(): "
                 "unknown register %d (%s)",
                 misc_reg, miscRegName[misc_reg]);
+                
     }
 
     DPRINTF(GIC, "Gicv3CPUInterface::readMiscReg(): "
