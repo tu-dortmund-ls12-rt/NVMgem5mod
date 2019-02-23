@@ -473,7 +473,7 @@ Gicv3Distributor::read(Addr addr, size_t size, bool is_secure_access)
 
       case GICD_IIDR: // Implementer Identification Register
         //return 0x43b; // ARM JEP106 code (r0p0 GIC-500)
-        return 0;
+        return 0x42;
 
       case GICD_STATUSR: // Error Reporting Status Register
         // Optional register, RAZ/WI
