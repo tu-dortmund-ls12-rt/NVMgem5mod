@@ -195,6 +195,7 @@ TableWalker::walk(const RequestPtr &_req, ThreadContext *_tc, uint16_t _asid,
 
     WalkerState *savedCurrState = NULL;
 
+
     if (!currState && !_functional) {
         // For atomic mode, a new WalkerState instance should be only created
         // once per TLB. For timing mode, a new instance is generated for every
@@ -255,9 +256,9 @@ TableWalker::walk(const RequestPtr &_req, ThreadContext *_tc, uint16_t _asid,
     /** @todo These should be cached or grabbed from cached copies in
      the TLB, all these miscreg reads are expensive */
     currState->vaddr_tainted = currState->req->getVaddr();
-    if (currState->aarch64)
+    if (currState->aarch64){
         currState->vaddr = purifyTaggedAddr(currState->vaddr_tainted,
-                                            currState->tc, currState->el);
+                                            currState->tc, currState->el);}
     else
         currState->vaddr = currState->vaddr_tainted;
 
@@ -345,14 +346,13 @@ TableWalker::walk(const RequestPtr &_req, ThreadContext *_tc, uint16_t _asid,
     } else {
         pending = true;
         pendingChange();
-        if (currState->aarch64)
-            return processWalkAArch64();
+        if (currState->aarch64){
+            return processWalkAArch64();}
         else if (long_desc_format)
             return processWalkLPAE();
         else
             return processWalk();
     }
-
     return NoFault;
 }
 
@@ -2104,6 +2104,7 @@ TableWalker::insertTableEntry(DescriptorBase &descriptor, bool longDescriptor)
     DPRINTF(TLB, " - domain from L%d desc:%d data:%#x\n",
             descriptor.lookupLevel, static_cast<uint8_t>(descriptor.domain()),
             descriptor.getRawData());
+
 
     // Insert the entry into the TLB
     tlb->insert(currState->vaddr, te);
